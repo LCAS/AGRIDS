@@ -1,0 +1,13 @@
+ * Serving Flask app 'flask_web_server' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://10.5.1.1:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 138-568-238
+10.5.0.15 - - [29/Jan/2024 13:58:22] "GET /?entity_id=vine003 HTTP/1.1" 200 -
+10.5.0.15 - - [29/Jan/2024 13:58:22] "GET /static/style.css HTTP/1.1" 304 -
