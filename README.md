@@ -2,8 +2,8 @@
 
 ## Fiware Orion
 
-See [Orion README](orion/README.md)orion/README.md
+See [Orion README](orion)
 
 ## Zenoh
 
-See [Zenoh README](zenoh/README.md)orion/README.md
+See [Zenoh README](zenoh)
