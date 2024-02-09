@@ -15,8 +15,8 @@ MINIO_SECURE = False
 vineyard_name = "vineyard001"
 block_name = "block001"
 vine_row_name = "vinerow001"
-vine_name = "vine003"
-file_name = "photo003.jpg"
+vine_name = "vine001"
+file_name = "photo001.jpg"
 destination_file_name = destination_file_name = block_name + "/" + vine_row_name + "/" +vine_name + "/" + file_name
 
 FIWARE_ORION_URL = "http://cabbage-xps-8900:1026/v2/entities"
@@ -42,7 +42,7 @@ def add_data_to_fiware_orion(bucket_name, destination_file):
     }
 
     data = {
-        "id": "vine003",
+        "id": "vine001",
         "type": "Vine",
         "vinerow_id": {
             "value": "vinerow001",
@@ -57,32 +57,44 @@ def add_data_to_fiware_orion(bucket_name, destination_file):
             "type": "String"
         },
         "user_defined_id": {
-            "value": "Vine 3",
+            "value": "Vine 1",
             "type": "String"
         },
         "variety": {
-            "value": "Pinot Noir",
+            "value": "Malbec",
             "type": "String"
         },
         "clone": {
-            "value": "Pinot Meunier",
+            "value": "Merlot",
             "type": "String"
         },
         "rootstock": {
-            "value": "1570C",
+            "value": "1500C",
             "type": "String"
         },
         "location": {
             "type": "geo:json",
             "value": {
                 "type": "Point",
-                "coordinates": [53.227292304487605, -0.5486788194799487]
+                "coordinates": [53.22731330160554, -0.549453632782187]
             }
         },
         "photo": {
             "type": "URL",
             "value": f"{vineyard_name}/{block_name}/{vine_row_name}/{vine_name}/{file_name}"
-        }
+        
+        },
+        "grapes_number": {
+            "value": 15,
+            "type": "Integer"
+        },
+        "grapes_yield": {
+            "value": 5.8,
+            "type": "Float"
+        },
+
+        "fiware-service": "openiot"  # FIWARE service name
+    
     }
 
     response = requests.post(url, headers=headers, json=data)

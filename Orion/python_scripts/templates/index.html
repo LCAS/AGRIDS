@@ -19,7 +19,17 @@
             <p>Block ID: {{ block_id }}</p>
             <p>Vine Row: {{ vine_row }}</p>
             <p>Variety: {{ variety }}</p>
-            <p>Grapes Count: {{ grapes }}</p>
+            <p>Grapes Count: {{ grapes_number }}</p>
+            <!--<p>Last 10 Grapes Count:</p>
+            <ul>
+                {% for item in grapes_number_list %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>-->
+
+            <img src="{{ grape_number_plot_path }}" alt="Plot">
+
+            <p>Grapes Yield: {{ grapes_yield }}</p>
             <p>Clone: {{ clone }}</p>
             <p>Rootstock: {{ rootstock }}</p>
             <p>Coordinates: {{ coordinates }}</p>
