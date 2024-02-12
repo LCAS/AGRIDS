@@ -1,0 +1,56 @@
+{
+  plugins: {
+    // configuration of "storage_manager" plugin:
+    storage_manager: {
+      volumes: {
+        // configuration of a "influxdb2" volume (the "zenoh_backend_influxdb2" backend library will be loaded at startup)
+        //this should be named influxdb2 for v2
+        influxdb2: {
+          // URL to the InfluxDB service
+          url: "http://localhost:8086/api/v2/",
+          private: {
+            // If needed: InfluxDB credentials, preferably ALL-ACCESS for databases creation and drop
+            //if not ALL-ACCESS then atleast with authorization to create/delete buckets
+            //Note: this should not be left empty for the plugin to work; if you have no admin creds, you can copy the user creds instead
+           org_id: "7829dda3fdb40c4a", // org ID not name
+           token: "Yk4TdmYvo95inSvUT4ohlm3NPcSJ0nfvzBPwANtBEs2nu28fGjXauu4vs_zbvB7TedF1PqJYZzOvLTlzCz-GbA=="
+          }
+        }
+      },
+      storages: {
+        // configuration of a "demo" storage using the "influxdb2" volume
+        demo: {
+          // the key expression this storage will subscribes to
+          key_expr: "demo/example/**",
+          // this prefix will be stripped from the received key when converting to database key.
+          // i.e.: "demo/example/a/b" will be stored as "a/b"
+          // this option is optional
+          strip_prefix: "demo/example",
+          volume: {
+            //this will be influxdb2 for v2 (exactly the same name as in volumes section)
+            id: "influxdb2",
+            // the database name within InfluxDB (not the db ID)
+            db: "zenoh_example",
+            // if the database doesn't exist, create it
+            create_db: true,
+            // strategy on storage closure
+            on_closure: "drop_db",
+            private: {
+              //required 
+              // If needed: InfluxDB credentials, with read/write privileges for the database
+              //this will be the same as for admin
+                org_id: "7829dda3fdb40c4a", // org ID not name
+                //this is any token with either:
+                //a.) Read-Write access to the existing DB mentioned above in the config
+                //b.) Read-write access to ALL buckets in the organization so it can access the new bucket created by zenoh
+                token: "Yk4TdmYvo95inSvUT4ohlm3NPcSJ0nfvzBPwANtBEs2nu28fGjXauu4vs_zbvB7TedF1PqJYZzOvLTlzCz-GbA==" 
+            }
+          }
+        }
+      }
+    },
+    // Optionally, add the REST plugin
+    // rest: { http_port: 8000 }
+    rest: { http_port: 10000 }
+  }
+}

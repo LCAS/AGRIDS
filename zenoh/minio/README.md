@@ -1,4 +1,5 @@
 # Zenoh
+`https://github.com/eclipse-zenoh/zenoh-backend-s3/tree/main#tests-using-the-rest-api`
 
 ## Install
 ```
@@ -29,4 +30,3 @@ To access via browser go to `localhost:9000` default login and password is `mini
 Change server IP, port number and access keys in `zenoh_minio.json5`.
 
 To start Zenoh `zenohd -c zenoh_minio.json5`.
-
