@@ -1,4 +1,4 @@
-# Zenoh
+# Zenoh with MinIO
 `https://github.com/eclipse-zenoh/zenoh-backend-s3/tree/main#tests-using-the-rest-api`
 
 ## Install

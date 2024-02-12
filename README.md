@@ -6,7 +6,7 @@ See [Orion README](orion)
 
 ## Zenoh with MinIO
 
-See [Zenoh README](zenoh/minio)
+See [Zenoh MinIO README](zenoh/minio)
 
 ## Zenoh with InfluxDB
 
