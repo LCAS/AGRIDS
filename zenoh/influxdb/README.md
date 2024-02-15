@@ -47,7 +47,7 @@ API token `Yk4TdmYvo95inSvUT4ohlm3NPcSJ0nfvzBPwANtBEs2nu28fGjXauu4vs_zbvB7TedF1P
 
 To start Zenoh `zenohd -c zenoh_influxdb_vista.json5`.
 
-Start python script that listens to data on Zenoh "vista/data" and converts the data to InfluxDB format so it can be queried by InfluxDB.
+Start python script `zenoh_influxdb_connector.py` that listens to data on Zenoh "vista/data" and converts the data to InfluxDB format so it can be queried by InfluxDB.
 
 Example curl script to sen data to Zenoh.
 ```
