@@ -27,7 +27,7 @@ def query_keys_in_row(bucket, vine_id):
     client = InfluxDBClient(url=url, token=token, org=org)
 
     query = 'from(bucket: "' + bucket + '")' \
-            '|> range(start: -10h)' \
+            '|> range(start: -100h)' \
             '|> filter(fn: (r) => r["_measurement"] == "' + vine_id + '")' \
             '|> filter(fn: (r) => r["_field"] == "value")' \
             '|> yield(name: "last")'
@@ -36,7 +36,8 @@ def query_keys_in_row(bucket, vine_id):
 
     for table in tables:
         for record in table.records:
-            return json.loads(record.values["_value"])
+            return record.values["_value"]
+            #print(record.values["_value"])
         
 def get_vine_ids_in_vine_row(vine_ids, bucket, vine_row_id):
     matching_vine_ids = set()
@@ -44,11 +45,12 @@ def get_vine_ids_in_vine_row(vine_ids, bucket, vine_row_id):
     for vine_id in vine_ids:
         json_data = query_keys_in_row(bucket, vine_id)
 
-        if json_data.get("vine_row_id", {}).get("value") == vine_row_id:
-            print(json_data.get("vine_row_id", {}).get("value"))
-            matching_vine_ids.add(vine_id)
-        #if json_data and json_data.get("vine_row_id", {}).get("value") == vine_row_id:
-        #    matching_vine_ids.add(vine_id)
+        for item in json_data:
+            vine_row_id_value = item.get("vine_row_id", {}).get("value")
+            print(vine_row_id_value)
+            
+            if vine_row_id_value == vine_row_id:
+                matching_vine_ids.add(vine_id) # Add vine id to list of vines in row X
 
     return matching_vine_ids
 
@@ -64,6 +66,6 @@ if __name__ == "__main__":
     matching_vine_ids = get_vine_ids_in_vine_row(all_vine_id, bucket, vine_row_id)
 
     # Print matching vine IDs
-    print(f"Vine IDs in {vine_row_id}:")
-    for vine_id in matching_vine_ids:
-        print(vine_id)
+    #print(f"Vine IDs in {vine_row_id}:")
+    #for vine_id in matching_vine_ids:
+    #    print(vine_id)

@@ -22,7 +22,7 @@ sudo dpkg -i influxdb2_2.7.4-1_amd64.deb
 ## Start InfluxDB
 `sudo service influxdb start`
 
-## Start Zenoh
+## Start Zenoh Connected to InfluxDB
 
 To start Zenoh `zenohd -c zenoh_influxdb.json5`.
 
@@ -42,3 +42,14 @@ API token `Yk4TdmYvo95inSvUT4ohlm3NPcSJ0nfvzBPwANtBEs2nu28fGjXauu4vs_zbvB7TedF1P
 5. Toggle raw data on
 6. Under aggregate funciton click on last
 7. CLick on blue submit button
+
+## Start Zenoh Not Connected to InfluxDB
+
+To start Zenoh `zenohd -c zenoh_influxdb_vista.json5`.
+
+Start python script that listens to data on Zenoh "vista/data" and converts the data to InfluxDB format so it can be queried by InfluxDB.
+
+Example curl script to sen data to Zenoh.
+```
+curl -X PUT -d '{"id": "vine001", "vine_row_id": {"value": "vinerow001"}, "user_defined_id": {"value": "Vine 1"}, "variety": {"value": "Merlot"}, "clone": {"value": "Chardonnay"}, "rootstock": {"value": "3309C"}, "grapes_number": {"value": 5}, "grapes_yield": {"value": 4.8}}' http://localhost:10000/vista/data
+```

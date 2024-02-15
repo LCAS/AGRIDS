@@ -11,7 +11,7 @@ def query_json_data(vine_id, bucket):
     client = InfluxDBClient(url=url, token=token, org=org)
 
     query = 'from(bucket: "' + bucket + '")' \
-            '|> range(start: -10h)' \
+            '|> range(start: -100h)' \
             '|> filter(fn: (r) => r["_measurement"] == "' + vine_id + '")' \
             '|> filter(fn: (r) => r["_field"] == "value")' \
             '|> yield(name: "last")'
