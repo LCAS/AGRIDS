@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" /> <!-- open street map -->    
+    <title>Vineyard Fiwire Orion and MinIO Storage</title>
+</head>
+<body>
+    <div class="image-container">
+        <div class="image-info">
+            <img src="{{ image_url }}" alt="Image" width="400">
+            <p>Vine ID: {{ vine_id }}</p>
+            <p>Bucket Name: {{ bucket_name }}</p>
+            <p>Vineyard ID: {{ vineyard_id }}</p>
+            <p>Block ID: {{ block_id }}</p>
+            <p>Vine Row: {{ vine_row }}</p>
+            <p>Variety: {{ variety }}</p>
+            <p>Grapes Count: {{ grapes_number }}</p>
+            <p>Grapes Yield: {{ grapes_yield }}</p>
+            <p>Clone: {{ clone }}</p>
+            <p>Rootstock: {{ rootstock }}</p>
+            <p>Coordinates: {{ coordinates }}</p>
+
+            <form method="get" action="/">
+                <label for="entity_id">Enter Entity ID:</label>
+                <input type="text" id="entity_id" name="entity_id" required>
+                <button type="submit">Submit</button>
+            </form>
+
+            <p>{{ error_message }}</p>
+        </div>
+    </div>
+
+</body>
+</html>
