@@ -10,6 +10,7 @@
 <body>
     <div class="image-container">
         <div class="image-info">
+            <p>Vineyard Fiwire Orion and MinIO Storage</p>
             <img src="{{ image_url }}" alt="Image" width="400">
             <p>Vine (Entity) ID: {{ entity_id }}</p>
             <p>MinIO Bucket Name: {{ bucket_name }}</p>
@@ -27,8 +28,6 @@
                 {% endfor %}
             </ul>-->
 
-            <img src="{{ grape_number_plot_path }}" alt="Plot">
-
             <p>Grapes Yield: {{ grapes_yield }}</p>
             <p>Clone: {{ clone }}</p>
             <p>Rootstock: {{ rootstock }}</p>
@@ -39,6 +38,8 @@
                 <input type="text" id="entity_id" name="entity_id" required>
                 <button type="submit">Submit</button>
             </form>
+
+            <img src="{{ grape_number_plot_path }}" alt="Plot">
 
             <p>{{ error_message }}</p>
         </div>

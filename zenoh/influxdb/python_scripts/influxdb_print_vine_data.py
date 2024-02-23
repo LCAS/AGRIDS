@@ -4,7 +4,7 @@ from influxdb_client import InfluxDBClient
 url = "http://localhost:8086"
 token = "Yk4TdmYvo95inSvUT4ohlm3NPcSJ0nfvzBPwANtBEs2nu28fGjXauu4vs_zbvB7TedF1PqJYZzOvLTlzCz-GbA=="
 org = "7829dda3fdb40c4a"
-bucket = "vineyard"
+bucket = "vineyard001"
 vine_id_to_query = "vine001"
 
 # InfluxDB client
@@ -28,6 +28,7 @@ latest_record = {
     "variety": None,
     "clone": None,
     "rootstock": None,
+    "geom_coordinates": None,
     "grapes_number": None,
     "grapes_yield": None
 }
@@ -40,6 +41,7 @@ for table in tables:
         variety = row.values.get("variety")
         clone = row.values.get("clone")
         rootstock = row.values.get("rootstock")
+        geom_coordinates = row.values.get("geom_coordinates")
         grapes_number = row.values.get("_value") if row.values.get("_field") == "grapes_number" else None
         grapes_yield = row.values.get("_value") if row.values.get("_field") == "grapes_yield" else None
 
@@ -50,6 +52,7 @@ for table in tables:
             latest_record["variety"] = variety
             latest_record["clone"] = clone
             latest_record["rootstock"] = rootstock
+            latest_record["geom_coordinates"] = geom_coordinates
         if grapes_number is not None:
             latest_record["grapes_number"] = grapes_number
         if grapes_yield is not None:
@@ -62,6 +65,7 @@ print(f"User Defined ID: {latest_record['user_defined_id']}")
 print(f"Variety: {latest_record['variety']}")
 print(f"Clone: {latest_record['clone']}")
 print(f"Rootstock: {latest_record['rootstock']}")
+print(f"geom_coordinates: {latest_record['geom_coordinates']}")
 print(f"Grapes Number: {latest_record['grapes_number']}")
 print(f"Grapes Yield: {latest_record['grapes_yield']}")
 

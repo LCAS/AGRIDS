@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" /> <!-- open street map -->    
-    <title>Vineyard Fiwire Orion and MinIO Storage</title>
+    <title>Vineyard InfluxDB and MinIO Storage</title>
 </head>
 <body>
     <div class="image-container">
         <div class="image-info">
+            <p>Vineyard InfluxDB and MinIO Storage</p>
             <img src="{{ image_url }}" alt="Image" width="400">
             <p>Vine ID: {{ vine_id }}</p>
             <p>Bucket Name: {{ bucket_name }}</p>
@@ -24,14 +25,38 @@
             <p>Coordinates: {{ coordinates }}</p>
 
             <form method="get" action="/">
-                <label for="entity_id">Enter Entity ID:</label>
-                <input type="text" id="entity_id" name="entity_id" required>
+                <label for="vine_id">Enter Vine ID:</label>
+                <input type="text" id="vine_id" name="vine_id" required>
                 <button type="submit">Submit</button>
             </form>
 
+            <img src="{{ grape_number_plot_path }}" alt="Plot">
+
             <p>{{ error_message }}</p>
         </div>
+        <div class="map-info">
+            <!-- Add a div to hold the map -->
+            <div id="map" style="height: 400px; width: 400px;"></div>
+        </div>
     </div>
+
+<!-- Add Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>       
+
+<!-- Add script to create the open street map -->
+<script>
+    var coordinates = {{ coordinates }};
+    
+    var map = L.map('map').setView(coordinates, 17); // lat-long, zoom level
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    L.marker(coordinates).addTo(map)
+        .bindPopup('{{ vine_id }}')
+        .openPopup();
+</script>
 
 </body>
 </html>

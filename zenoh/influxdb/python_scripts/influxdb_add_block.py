@@ -7,7 +7,7 @@ def store_block_data(block_id, user_defined_id, street_address, row_spacing_m, v
     url = "http://localhost:8086"
     token = "Yk4TdmYvo95inSvUT4ohlm3NPcSJ0nfvzBPwANtBEs2nu28fGjXauu4vs_zbvB7TedF1PqJYZzOvLTlzCz-GbA=="
     org = "7829dda3fdb40c4a"
-    bucket = "vineyard"
+    bucket = "vineyard001"
     
     # InfluxDB client
     influx_client = InfluxDBClient(url=url, token=token, org=org)
@@ -17,18 +17,18 @@ def store_block_data(block_id, user_defined_id, street_address, row_spacing_m, v
     
     # Create InfluxDB point for block data
     point = Point(block_id) \
-        .tag("user_defined_id", user_defined_id) \
+        .field("user_defined_id", user_defined_id) \
         .tag("street_address", street_address) \
         .tag("row_spacing_m", row_spacing_m) \
         .tag("vine_spacing_m", vine_spacing_m) \
-        .tag("date_start", date_start) \
-        .tag("date_end", date_end) \
+        .field("date_start", date_start) \
+        .field("date_end", date_end) \
         .tag("geom", json.dumps(geom_coordinates))
     
     # Write block data to InfluxDB and get feedback
     try:
         write_api.write(bucket=bucket, org=org, record=point)
-        print("Block data stored successfully in InfluxDB")
+        print("Block data " + block_id + " stored successfully in InfluxDB")
     except Exception as e:
         print("Error storing block data in InfluxDB:", e)
     

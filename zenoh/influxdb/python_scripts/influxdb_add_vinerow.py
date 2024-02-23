@@ -7,7 +7,7 @@ def store_vine_row_data(vine_row_id, block_id, user_defined_id, orientation, geo
     url = "http://localhost:8086"
     token = "Yk4TdmYvo95inSvUT4ohlm3NPcSJ0nfvzBPwANtBEs2nu28fGjXauu4vs_zbvB7TedF1PqJYZzOvLTlzCz-GbA=="
     org = "7829dda3fdb40c4a"
-    bucket = "vineyard"
+    bucket = "vineyard001"
     
     # InfluxDB client
     influx_client = InfluxDBClient(url=url, token=token, org=org)
@@ -18,14 +18,14 @@ def store_vine_row_data(vine_row_id, block_id, user_defined_id, orientation, geo
     # Create InfluxDB point
     point = Point(vine_row_id) \
         .tag("block_id", block_id) \
-        .tag("user_defined_id", user_defined_id) \
+        .field("user_defined_id", user_defined_id) \
         .tag("orientation", orientation) \
         .tag("geom_coordinates", json.dumps(geom_coordinates))
     
     # Write data to InfluxDB and get feedback
     try:
         write_api.write(bucket=bucket, org=org, record=point)
-        print("Data stored successfully in InfluxDB")
+        print("Vine row data " + vine_row_id + " stored successfully in InfluxDB")
     except Exception as e:
         print("Error storing data in InfluxDB:", e)
     
