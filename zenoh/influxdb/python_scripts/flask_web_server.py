@@ -149,6 +149,34 @@ def query_influxdb_for_vine_data_grape_number_time(url, token, org, bucket, vine
 
     return last_10_grapes_numbers, last_10_grapes_numbers_timestamps
 
+# Function to query InfluxDB and retrieve the vine data for grape number over time
+def query_influxdb_for_block_id(url, token, org, bucket, vine_row_id_to_query):
+
+    # InfluxDB client
+    client = InfluxDBClient(url=url, token=token, org=org)
+
+    query = f'''
+        from(bucket: "{bucket}")
+            |> range(start: 0)
+            |> filter(fn: (r) => r["_measurement"] == "{vine_row_id_to_query}")
+            |> last()
+    '''
+
+    # Execute query
+    tables = client.query_api().query(query, org=org)
+
+    block_id = None
+
+    # Process query results
+    for table in tables:
+        for row in table.records:
+            block_id = row.values.get("block_id")
+
+    # Close the InfluxDB client
+    client.close()
+
+    return block_id
+
 # Route for displaying the latest record
 @app.route('/', methods=['GET', 'POST'])
 def display_latest_record():
@@ -188,6 +216,9 @@ def display_latest_record():
     grapes_number = latest_vine_data_record['grapes_number']
     grapes_yield = latest_vine_data_record['grapes_yield']
     photo_url = latest_photo_data_record['photo_url']
+
+    # Get block id of vine query InfluxDB using vine row id from previous query
+    block_id = query_influxdb_for_block_id(url, token, org, bucket, vine_row_id)
     
     minio_client = initialize_minio_client()
 
@@ -203,9 +234,12 @@ def display_latest_record():
     # Render the template with the latest record data
     return render_template('index.html',
                                         vine_id=vine_id_to_query,
-                                        bucket_name=bucket,
+                                        bucket_name_minio=BUCKET_NAME,
+                                        file_path=FILE_PATH,
+                                        file_name = path_part[4],
+                                        bucket_name_influx=bucket,
                                         vineyard_id=bucket,
-                                        block_id="None",
+                                        block_id=block_id,
                                         vine_row=vine_row_id,
                                         variety=variety,
                                         grapes_number=grapes_number,

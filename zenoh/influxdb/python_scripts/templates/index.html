@@ -12,8 +12,10 @@
         <div class="image-info">
             <p>Vineyard InfluxDB and MinIO Storage</p>
             <img src="{{ image_url }}" alt="Image" width="400">
-            <p>Vine ID: {{ vine_id }}</p>
-            <p>Bucket Name: {{ bucket_name }}</p>
+            <p>Vine ID: {{ vine_id }}</p> <p>MinIO Bucket Name: {{ bucket_name_minio }}</p>
+            <p>MinIO File Path: {{ file_path }}</p>
+            <a href="{{ image_url }}" download="{{ image_url }}">Download File {{ file_name }}</a>
+            <p>InfluxDB Bucket Name: {{ bucket_name_influx }}</p>
             <p>Vineyard ID: {{ vineyard_id }}</p>
             <p>Block ID: {{ block_id }}</p>
             <p>Vine Row: {{ vine_row }}</p>
