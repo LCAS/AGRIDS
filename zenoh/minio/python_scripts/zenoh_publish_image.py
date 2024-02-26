@@ -8,7 +8,7 @@ if __name__ == "__main__":
     file_name = "photo001.jpg"
     destination_file = "vineyard001_block001_vinerow001_vine001_"
     
-    # Define the topic where the image data will be published + file_name to pass across the file name
+    # Topic where the image data will be published + file_name to pass across the file name
     topic = "image_data/" + destination_file + file_name
 
     try:
@@ -18,8 +18,8 @@ if __name__ == "__main__":
         print(f"Error: Image file '{file_name}' not found.")
         exit()
 
-    # Define the image name
-    image_name = "vine001.jpg"  # Replace this with the actual image file name
+    # Image name to store in database
+    image_name = "vine001.jpg"
 
     # Declare publisher for the specified topic
     pub = session.declare_publisher(topic)
