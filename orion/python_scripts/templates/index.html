@@ -34,12 +34,12 @@
             <p>Coordinates: {{ coordinates }}</p>
 
             <form method="get" action="/">
-                <label for="entity_id">Enter Entity ID:</label>
+                <label for="entity_id">Enter Vine (Entity) ID:</label>
                 <input type="text" id="entity_id" name="entity_id" required>
                 <button type="submit">Submit</button>
             </form>
 
-            <img src="{{ grape_number_plot_path }}" alt="Plot">
+            <img src="{{ grape_number_plot_path }}" alt="Plot" width="400">
 
             <p>{{ error_message }}</p>
         </div>

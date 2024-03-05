@@ -22,7 +22,7 @@ updated_vine_data = {
     #    "type": "String"
     #},
     "grapes_number": {
-        "value": 22,
+        "value": 13,
         "type": "Integer"
     },
     "grapes_yield": {

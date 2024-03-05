@@ -77,7 +77,8 @@ services:
     networks:
       - default
     volumes:
-      - mongo-db:/data
+      - ~/VISTA/orion/mongodb:/data/db
+    #  - mongo-db:/data
     healthcheck:
       test: ["CMD","mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
@@ -102,5 +103,5 @@ networks:
       config:
         - subnet: 172.18.1.0/24
   
-volumes:
-  mongo-db: ~
+#volumes:
+#  mongo-db: ~

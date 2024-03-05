@@ -103,15 +103,15 @@ def display_image():
             #grapes_number_list = [{result['recvTime'].strftime('%Y-%m-%d %H:%M:%S'), result['attrValue']} for result in mongodb_result]
 
             results_grape_number = []
-            timestamps = []
+            results_grape_number_timestamps = []
 
             for result in mongodb_result:
                 results_grape_number.append(result.get('attrValue'))
-                timestamps.append(result.get('recvTime'))
+                results_grape_number_timestamps.append(result.get('recvTime'))
 
             # Create a plot
             plt.figure(figsize=(10, 6))
-            plt.plot(timestamps, results_grape_number, marker='o')
+            plt.plot(results_grape_number_timestamps, results_grape_number, marker='o')
             plt.title('Number of Grapes Over Time ' + entity_id)
             plt.xlabel('Timestamp')
             plt.ylabel('Number of Grapes')
@@ -133,7 +133,6 @@ def display_image():
                                     vine_row=vine_row,
                                     variety=variety,
                                     grapes_number=grapes_number,
-                                    grapes_number_list=results_grape_number,
                                     grape_number_plot_path=grape_number_plot_path,
                                     grapes_yield=grapes_yield,
                                     clone=clone,
