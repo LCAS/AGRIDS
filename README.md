@@ -19,7 +19,7 @@ To switch back to editing the shapes and to add more polygons, lines and points 
 
 To save enter a unique vineyard ID and click save to store in AGRIDS.
 
-![image](https://github.com/jondave/VISTA/assets/6209386/9fce845b-a42d-4e6e-a86e-ade7949637a4)
+![341361508-9fce845b-a42d-4e6e-a86e-ade7949637a4](https://github.com/LCAS/AGRIDS/assets/6209386/ce1c64f2-949d-422d-a6b5-df30579beb30)
 
 #### 2. Import vine rows with labelled end posts as a CSV file.
 To import a CSV file, the columns must be in the format; Latitude, Longitude, Row, where Row is a number corresponding the row numbering system used by the vineyard, there must only be two latitude and longitude points with the same row number.
@@ -37,7 +37,7 @@ Other features such as blocks and infrastructure can be added to the map as desc
 
 To save enter a unique vineyard ID and click save to store in AGRIDS.
 
-![image](https://github.com/jondave/VISTA/assets/6209386/8731e3cc-8829-4f52-848f-31cadfee8b0f)
+![341364045-8731e3cc-8829-4f52-848f-31cadfee8b0f](https://github.com/LCAS/AGRIDS/assets/6209386/b0f02681-adb2-4f70-acaa-6a90fa9909c5)
 
 #### 3. Import vine rows with unlabelled end posts as a CSV file.
 To import a CSV file without the row end posts having labels, the file collums must be in the format; Latitude, Longitude.
@@ -63,7 +63,7 @@ Other features such as blocks and infrastructure can be added to the map as desc
 
 To save enter a unique vineyard ID and click save to store in AGRIDS.
 
-![image](https://github.com/jondave/VISTA/assets/6209386/63dc7bdf-7751-49d5-acc9-b6929b7d0d71)
+![341366844-63dc7bdf-7751-49d5-acc9-b6929b7d0d71](https://github.com/LCAS/AGRIDS/assets/6209386/8b8b45f3-9a3e-4614-8117-703f8f896a0d)
 
 ### Visualise Data
 Data stored in AGRIDS can be visualised on the map, and data layers can be shown and hidden by clicking the checkboxes.
@@ -72,7 +72,7 @@ Properties of the features can be shown by clicking on the feature in the map.
 
 Data computed for the whole vineyard and for each block are tabulated below the map.
 
-![image](https://github.com/jondave/VISTA/assets/6209386/d3f5942e-069f-4320-94e6-86dd0e92466c)
+![341367375-d3f5942e-069f-4320-94e6-86dd0e92466c](https://github.com/LCAS/AGRIDS/assets/6209386/4eb1d1ea-9b3d-4008-8e1e-259559fef0c2)
 
 ### Export Data
 Data stored in AGRIDS can be exported in different formats.
@@ -83,7 +83,7 @@ The computed vineyard and block data can be exported as a PDF report.
 
 Navigation and topological maps can be exported as specific robotic formats and as a KML file.
 
-![image](https://github.com/jondave/VISTA/assets/6209386/2a74c98a-12cd-4524-9dfb-fa823dab1f03)
+![341367845-2a74c98a-12cd-4524-9dfb-fa823dab1f03](https://github.com/LCAS/AGRIDS/assets/6209386/98bf7427-6ff8-47c2-9c53-e9df9a96242d)
 
 ## Fiware Orion Entities
 | Vineyard               | Block                       | Vine Row                    | Vine                     | Polygon                 | Line                      | Point                    | Photo                   |
