@@ -1,0 +1,105 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Inter', sans-serif;
+    color: #121212;
+    font-size 2rem;
+    /*height: 100vh;*/
+    /*background-color: #f0f0f0;*/
+}
+
+a {
+    color: #121212;
+}
+
+.mapboxgl-canvas{
+    border-radius: 30px;
+}
+
+/*fieldset {
+    margin: 20px;
+}*/
+
+fieldset label {
+    font-size: 1.2rem;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    text-align: center;
+    padding: 8px;
+    border: 1px solid black;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+fieldset {
+    border: none;
+    text-align: center;
+}
+
+.mapboxgl-ctrl.mapboxgl-ctrl-attrib {
+    padding: 5px 20px 5px 10px;
+    border-top-left-radius: 10px;
+}
+
+.mapboxgl-ctrl-logo {
+margin-left: 5px;
+}
+
+.info {
+margin: 20px 0;
+}
+
+.info a {
+    background: #7ab4f5;
+    padding: 5px 10px;
+    border-radius: 10px;
+    text-decoration: none;
+}
+
+.info a:hover {
+background: #a2aebb;
+}
+
+.legend {
+    background: white;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    position: absolute;
+    bottom: 30px;
+    left: 10px;
+    z-index: 1;
+  }
+  
+  .legend h4 {
+    margin: 0 0 10px;
+  }
+  
+  .legend div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  
+  .legend span {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    border: 1px solid #000;
+  }
+  

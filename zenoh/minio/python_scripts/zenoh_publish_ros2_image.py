@@ -18,7 +18,7 @@ def image_callback(msg, session):
         image_data_base64 = base64.b64encode(jpeg_image)
 
         # Publish the image data over Zenoh
-        topic = "vista/image_data"
+        topic = "agrids/image_data"
         pub = session.declare_publisher(topic)
         pub.put(image_data_base64)
         #print("Published image on zenoh")

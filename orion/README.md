@@ -1,4 +1,4 @@
-# VISTA
+# AGRIDS
 
 ## Fiware Orion
 To start Fiware Orion, Cygnus and MongoDB `cd` into `docker` directory and run the `./services cygnus` command this starts a docker compise file.

@@ -3,11 +3,16 @@ from datetime import datetime, timedelta
 
 def read_comet(entity_type, entity_id, attr_name, agg_method, h_limit=3, h_offset=0, date_from=None, date_to=None):
     base_url = 'http://cabbage-xps-8900:8666/STH/v1/contextEntities'
-    url = f'{base_url}/type/{entity_type}/id/{entity_id}/attributes/{attr_name}?hLimit=3&hOffset=0&dateFrom=2024-02-01T00:00:00.000Z&dateTo=2024-02-01T23:59:59.999Z'
+    url = f'{base_url}/type/{entity_type}/id/{entity_id}/attributes/{attr_name}?hLimit=3&hOffset=0&dateFrom=2024-02-01T00:00:00.000Z&dateTo=2024-04-01T23:59:59.999Z'
 
     # http://cabbage-xps-8900:8666/STH/v1/contextEntities/type/Vine/id/vine001/attributes/grapes_number?hLimit=3&hOffset=0&dateFrom=2024-02-01T00:00:00.000Z&dateTo=2024-02-01T23:59:59.999Z
 
-    response = requests.get(url)
+    headers = {
+        "fiware-servicepath": "/",
+        "fiware-service": "openiot"
+    }
+
+    response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         return response.json()
@@ -56,7 +61,7 @@ entity_id = 'vine001'
 attr_name = 'grapes_number'
 agg_method = 'occur'
 date_from = '2024-02-01T00:00:00.000Z'
-date_to = '2016-02-01T23:59:59.999Z'
+date_to = '2024-04-01T23:59:59.999Z'
 
 try:
     comet_response = read_comet(entity_type, entity_id, attr_name, agg_method, date_from=date_from, date_to=date_to)

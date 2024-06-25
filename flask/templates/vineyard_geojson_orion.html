@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"> <!-- MapBox -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script> <!-- MapBox -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.3.0/turf.min.js"></script> <!-- Turf library for geospatial calculations -->
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> <!-- Apex Charts Graphs -->
+
+    <title>{{ vineyard_data_list[0].name }} AGRIDS Map</title>
+</head>
+<body>
+    <div class="container">
+        <div class="info">
+            <h1>{{ vineyard_data_list[0].name }} AGRIDS Map</h1>
+            <!--<a href="/">Main</a>
+            <a href="vine">Vine</a>
+            <a href="vine_all">All Vines</a>
+            <a href="vine_add">Add Vines</a>
+            <a href="vinerow">Vine Row</a>
+            <a href="vinerow_all">All Vine Rows</a>
+            <a href="vinerow_add">Add Vine Rows</a>
+            <a href="block">Block</a>
+            <a href="block_all">All Blocks</a>
+            <a href="block_add">Add Blocks</a>-->
+            <a href="vineyard_geojson_orion">View Vineyard</a>
+            <a href="create_map">Create Map</a>
+            <a href="import_csv">Import Labelled End Posts</a>
+            <!--<a href="import_csv_click_points">Import CSV with End Posts</a>-->
+            <!--<a href="import_csv_click_points_bearing">Import CSV with End Posts Generate Rows</a>-->
+            <a href="import_csv_click_points_bearing_select_points">Import Unlabelled End Posts</a>
+        </div>
+        <!-- Add a div to hold the map -->
+        <div id="map" style="height: 70vh; width: 80vw;"></div>
+
+        <div id="legend" class="legend">
+            <h4>Grape Numbers</h4>
+            <div><span style="background-color: #ffffff;"></span> 0</div>
+            <div><span style="background-color: #ffffb2;"></span> 10</div>
+            <div><span style="background-color: #fed976;"></span> 20</div>
+            <div><span style="background-color: #feb24c;"></span> 30</div>
+            <div><span style="background-color: #fd8d3c;"></span> 40</div>
+            <div><span style="background-color: #f03b20;"></span> 50</div>
+            <div><span style="background-color: #bd0026;"></span> 60</div>
+            <!-- TODO change so rang eof numbers not fixed but varies on range of grape numbers in geojson data. -->
+          </div>
+
+        <form method="post">
+            <fieldset>
+                <label>Show: </label>
+                <label for="showAll">All</label>
+                <input type="checkbox" id="showAll" name="showAll"> | 
+                <label for="showBlockAreaPolygon">Zone Blocks</label>
+                <input type="checkbox" id="showBlockAreaPolygon" name="showBlockAreaPolygon"> | 
+                <label for="showBlocks">Variety Blocks</label>
+                <input type="checkbox" id="showBlocks" name="showBlocks" checked> | 
+                <label for="showVineRows">Vine Rows</label>
+                <input type="checkbox" id="showVineRows" name="showVineRows" checked> | 
+                <label for="showVines">Vines</label>
+                <input type="checkbox" id="showVines" name="showVines"> | 
+                <label for="showVinesGrapeNumber">Vines Grape Number</label>
+                <input type="checkbox" id="showVinesGrapeNumber" name="showVinesGrapeNumber"> | 
+                <label for="showAnchorPosts">Anchor Posts</label>
+                <input type="checkbox" id="showAnchorPosts" name="showAnchorPosts"> | 
+                <label for="showAnchorLines">Anchor Lines</label>
+                <input type="checkbox" id="showAnchorLines" name="showAnchorLines"> | 
+                <label for="showUnderVineAreas">Under Vine Areas</label>
+                <input type="checkbox" id="showUnderVineAreas" name="showUnderVineAreas"> | 
+                <br />
+                <label for="showMidRowLines">Mid Row Lines</label>
+                <input type="checkbox" id="showMidRowLines" name="showMidRowLines"> |
+                <label for="showMidRowAreas">Mid Row Areas</label>
+                <input type="checkbox" id="showMidRowAreas" name="showMidRowAreas"> |
+                <label for="showVineRowBoundaries">Vine Row Boundaries</label>
+                <input type="checkbox" id="showVineRowBoundaries" name="showVineRowBoundaries"> |
+                <label for="showTopologicalMap">Topological Map</label>
+                <input type="checkbox" id="showTopologicalMap" name="showTopologicalMap"> | 
+                <label for="showPoints">Points</label>
+                <input type="checkbox" id="showPoints" name="showPoints" checked> | 
+                <label for="showLines">Lines</label>
+                <input type="checkbox" id="showLines" name="showLines" checked> | 
+                <label for="showPolygons">Polygons</label>
+                <input type="checkbox" id="showPolygons" name="showPolygons" checked> | 
+                <label for="showVineyardPolygon">Vineyard Boundary</label>
+                <input type="checkbox" id="showVineyardPolygon" name="showVineyardPolygon">
+                
+                <br />
+                <br />
+                
+                <label>Export:</label>
+                <input type="submit" name="button_export_to_geojson" value="GeoJSON"> | 
+                <input type="submit" name="button_export_to_antobot_xml" value="Antobot XML"> | 
+                <input type="submit" name="button_export_to_pdf" value="PDF Report">
+                
+                <br />
+                <br />
+                
+                <label>Topological Map:</label>
+                <input type="submit" name="button_export_to_topological_map" value="Map"> | 
+                <input type="submit" name="button_export_to_topological_map_datum" value="Datum"> | 
+                <input type="submit" name="button_export_to_kml" value="KML">
+
+                <br />
+                <br />
+
+                <label for="vineyardSelect">Select Vineyard:</label>
+                <!--<select id="vineyardSelect" name="vineyard_id" onchange="submitForm()">
+                    <option value="jojo">JoJo's Vineyard</option>
+                    <option value="harrowandhope">Harrow and Hope</option>
+                </select>-->
+
+                <!--<select id="vineyardSelect" name="vineyard_id" onchange="submitForm()">
+                    {% for item in all_vineyard_data_list %}
+                        <option value="{{ item['vineyard_id'] }}">{{ item['name'] }} </option>
+                    {% endfor %}
+                </select>-->
+
+                <select id="vineyardSelect" name="vineyard_id">
+                    {% for item in all_vineyard_data_list %}
+                        {% if item['vineyard_id'] == selected_vineyard_id %}
+                            <option value="{{ item['vineyard_id'] }}" selected>{{ item['name'] }}</option>
+                        {% else %}
+                            <option value="{{ item['vineyard_id'] }}">{{ item['name'] }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+
+                <button type="submit" name="button_vineyard_select">View</button>
+            </fieldset>
+        </form>
+
+        <div class="info">
+            <h2>Vineyard Data</h2>
+            <p id="totalBlockArea">Total Blocks Area: {{ vineyard_area }} m<sup>2</sup></p>
+            <p>Total Vine Rows: {{ vineyard_total_rows }}</p>
+            <p>Total Vines: {{ vineyard_total_vines }}</p>
+            <p>Total Vine Row Length: {{ vineyard_total_row_length }} m</p>
+            <p>Total Under Vine Area: {{ under_vine_area }} m<sup>2</sup></p>
+            <p>Total Mid Row Area: {{ mid_row_area }} m<sup>2</sup></p>
+
+            <br />
+            
+            <p>Name: {{vineyard_data_list[0].name }}</p>            
+            <p>Address: {{vineyard_data_list[0].street_address }}</p>
+            <p>Owner: {{vineyard_data_list[0].owner }}</p>
+
+            <br />
+
+            <h2>Block Data</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Short Code</th>
+                        <th>Name</th>
+                        <th>Variety</th>
+                        <th>Area (m<sup>2</sup>)</th>
+                        <th>Total Vine Rows</th>
+                        <th>Total Vines</th>
+                        <th>Total Vine Row Length (m)</th>
+                        <th>Total Under Vine Area (m<sup>2</sup>)</th>
+                        <th>Total Mid Row Area (m<sup>2</sup>)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in block_data_list %}
+                        <tr>
+                            <td>{{ item['user_defined_id'] }}</td>
+                            <td>{{ item['name'] }}</td>
+                            <td>{{ item['variety'] }}</td>
+                            <td>{{ item['area'] }}</td>
+                            <td>{{ item['total_rows'] }}</td>
+                            <td>{{ item['number_of_vines_in_block'] }}</td>
+                            <td>{{ item['total_row_length'] }}</td>
+                            <td>{{ item['under_vine_area_block'] }}</td>
+                            <td>{{ item['mid_row_area_block'] }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Download file script -->
+    <script>
+        document.getElementById("exportForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            
+            // Submit the form asynchronously
+            fetch('/button_click', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Trigger the file download
+                    response.blob().then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'output.geojson';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+    <!-- Download file script -->
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoiam9uZGF2ZTI4OSIsImEiOiJjbHYyaW1rdjAwZmcwMnJwOGJpa3ZoaGpuIn0.2siN69K4PV8jgRZaIFlOjA';
+
+        var geojson_data_parsed = JSON.parse({{ geojson_data | tojson | safe  }});
+        var vine_row_boundaries_parsed = JSON.parse({{ vine_row_boundaries | tojson | safe  }});
+
+        // Function to calculate the bounding box of GeoJSON features
+        function calculateBoundingBox(features) {
+            var bounds = new mapboxgl.LngLatBounds();
+            features.forEach(function(feature) {
+                if (feature.geometry.type === 'Point') {
+                    bounds.extend(feature.geometry.coordinates);
+                } else if (feature.geometry.type === 'LineString') {
+                    feature.geometry.coordinates.forEach(function(coord) {
+                        bounds.extend(coord);
+                    });
+                } else if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates[0].forEach(function(coord) {
+                        bounds.extend(coord);
+                    });
+                }
+            });
+            return bounds;
+        }
+
+        // Default center coordinates
+        var defaultCenter = [-0.9772342405497342, 51.59632509886086];
+
+        // Check if there are features in the GeoJSON data
+        if (geojson_data_parsed.features.length > 0) {
+            // Calculate the bounding box of the GeoJSON features
+            var bounds = calculateBoundingBox(geojson_data_parsed.features);
+
+            // Get the center of the bounding box
+            var center = bounds.getCenter();
+
+            // Create the Mapbox map with the calculated center
+            var mapCenter = [center.lng, center.lat];
+            var zoom = 17
+        } else {
+            // Use default center if no features are present
+            var mapCenter = defaultCenter;
+            var zoom = 5
+        }
+
+        // Create the Mapbox map
+        const map = new mapboxgl.Map({
+            container: 'map', // container ID
+            style: 'mapbox://styles/mapbox/satellite-v9', // style URL // mapbox://styles/mapbox/satellite-streets-v12
+            center: mapCenter, // Set the calculated or default center
+            zoom: zoom
+        });
+
+        // Add zoom and rotation controls to the map.
+        map.addControl(new mapboxgl.NavigationControl());
+
+        map.on('load', () => {
+            map.addSource('geojson-data', {
+                type: 'geojson',
+                data: geojson_data_parsed
+            });
+            map.addSource('geojson-data-vine-row-boundaries', {
+                type: 'geojson',
+                data: vine_row_boundaries_parsed
+            });
+
+            // Points data start
+            map.addLayer({
+                'id': 'geojson-data-points-layer',
+                'type': 'circle',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                    'circle-color': '#ff8040',
+                    'circle-radius': 5,
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Point'],
+                    ['has', 'point_id']
+                ]
+            });
+
+            // Add click event listener for the points layer
+            map.on('click', 'geojson-data-points-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Name: ' + properties.name + '<br />' + 
+                        'Class: ' + properties.class_string + '<br />' + 
+                        'Category: ' + properties.category
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points layer
+            map.on('mouseenter', 'geojson-data-points-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change the cursor back to default when it leaves the points layer
+            map.on('mouseleave', 'geojson-data-points-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Points data end
+
+            // Lines data start
+            map.addLayer({
+                'id': 'geojson-data-lines-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#f5e216',
+                    'line-width': 4
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'LineString'],
+                    ['has', 'line_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-lines-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Name: ' + properties.name + '<br />' + 
+                        'Class: ' + properties.class_string + '<br />' + 
+                        'Category: ' + properties.category + '<br />' + 
+                        'Length: ' + properties.length + " m"
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-lines-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-lines-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Lines data end
+
+            // Polygons data start
+            map.addLayer({
+                'id': 'geojson-data-polygons-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                        'fill-color': '#fc7f03',
+                        'fill-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'polygon_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-polygons-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Name: ' + properties.name + '<br />' + 
+                        'Class: ' + properties.class_string + '<br />' + 
+                        'Category: ' + properties.category + '<br />' +
+                        'Area: ' + properties.area + ' m<sup>2</sup>' + '<br />' +
+                        'Perimeter: ' + properties.perimeter + ' m'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-polygons-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-polygons-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Polygons data end
+
+            // Vine Row boundaries data start
+            map.addLayer({
+                'id': 'geojson-data-vine-row-boundaries-layer',
+                'type': 'fill',
+                'source': 'geojson-data-vine-row-boundaries',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                        'fill-color': '#40bfff',
+                        'fill-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'vine_row_boundary_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-vine-row-boundaries-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Vine Row Boundary'// + '<br />' + 
+                        //'ID: ' + properties.vine_row_boundary_id
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-vine-row-boundaries-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-vine-row-boundaries-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            //  Vine Row boundaries data end
+
+            // Block data start
+            map.addLayer({
+                'id': 'geojson-data-block-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                        'fill-color': '#fcc05f',
+                        'fill-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'block_id'],
+                    ['!has', 'under_vine_id'],
+                    ['!has', 'mid_row_area_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-block-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Block Name: ' + properties.name + '<br />' + 
+                        'Short Code: ' + properties.user_defined_id + '<br />' +
+                        'Total Rows: ' + properties.total_rows + '<br />' +
+                        'Total Row Length: ' + properties.total_row_length + " m" + '<br />' +
+                        'Total Number of Vines: ' + properties.number_of_vines_in_block + '<br />' +
+                        'Area: ' + properties.area + ' m<sup>2</sup>' + '<br />' +
+                        'Perimeter: ' + properties.perimeter + ' m'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-block-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-block-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Block data end
+
+            // Add the line layer for block outlines
+            map.addLayer({
+                'id': 'geojson-data-block-outline-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                    'line-color': '#000000',
+                    'line-width': 2,
+                    'line-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'block_id'],
+                    ['!has', 'under_vine_id'],
+                    ['!has', 'mid_row_area_id']
+                ]
+            });
+
+            // Block Area data start
+            map.addLayer({
+                'id': 'geojson-data-block-area-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                        'fill-color': '#7ab4f5',
+                        'fill-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'block_area_id'],
+                    ['!has', 'under_vine_id'],
+                    ['!has', 'mid_row_area_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-block-area-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Name: ' + properties.name + '<br />' + 
+                        'Code: ' + properties.user_defined_id + '<br />' +
+                        'Area: ' + properties.area + ' m<sup>2</sup>' + '<br />' +
+                        'Perimeter: ' + properties.perimeter + ' m'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-block-area-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-block-area-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Block Area data end
+
+            // Under vine area data start
+            map.addLayer({
+                'id': 'geojson-data-under-vine-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                        'fill-color': '#e58a92',
+                        'fill-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'under_vine_id'],
+                ]
+            });
+
+            map.on('click', 'geojson-data-under-vine-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Under Vine Area' + '<br />' + 
+                        'Area: ' + properties.area + ' m<sup>2</sup>'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-under-vine-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-under-vine-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Under vine area data end
+
+            // Vine row data start
+            map.addLayer({
+                'id': 'geojson-data-vine-row-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#7af58f',
+                    'line-width': 4
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'LineString'],
+                    ['has', 'vine_row_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-vine-row-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Vine Row: ' + properties.user_defined_id + '<br />' + 
+                        'Length: ' + properties.length + " m" + '<br />' + 
+                        'Number of Vines: ' + properties.number_of_vines
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-vine-row-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-vine-row-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Vine row data end
+            
+            // Anchor post line data start
+            map.addLayer({
+                'id': 'geojson-data-anchor-post-line-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#d6fffe',
+                    'line-width': 4
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'LineString'],
+                    ['has', 'anchor_post_line_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-anchor-post-line-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Anchor Line'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-anchor-post-line-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-anchor-post-line-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Anchor post line data end
+
+            // Anchor post point data start
+            map.addLayer({
+                'id': 'geojson-data-anchor-post-point-layer',
+                'type': 'circle',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                    'circle-color': '#a2aebb',
+                    'circle-radius': 5,
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Point'],
+                    ['has', 'anchor_post_point_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-anchor-post-point-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Anchor Post'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-anchor-post-point-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-anchor-post-point-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Anchor post point data end
+
+            // Vine grape number data start
+            map.addLayer({
+                'id': 'geojson-data-vine-grape-number-layer',
+                'type': 'circle',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                    // Use interpolate expression to set circle color based on 'grape number'
+                    'circle-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'grape_number'],
+                        0, '#ffffff',   // grape number 0 (white)
+                        10, '#ffffb2',  // grape number 10 (light yellow)
+                        20, '#fed976',  // grape number 20 (medium yellow)
+                        30, '#feb24c',  // grape number 30 (orange)
+                        40, '#fd8d3c',  // grape number 40 (orange-red)
+                        50, '#f03b20',  // grape number 50 (red)
+                        60, '#bd0026'   // grape number 60 (dark red)
+                        // TODO change so rang eof numbers not fixed but varies on range of grape numbers in geojson data.
+                    ],
+                    'circle-radius': 5,
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Point'],
+                    ['has', 'vine_id']
+                ]
+            });
+
+            // Add legend to the map
+            const legend = document.getElementById('legend');
+            map.getContainer().appendChild(legend);
+
+            // Add a popup on click of the vine point.
+            map.on('click', 'geojson-data-vine-grape-number-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Vine ID: ' + properties.vine_id + '<br />' + 
+                        'Grape Number: ' + properties.grape_number
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-vine-grape-number-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-vine-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Vine grape number data end
+
+            // Vine data start
+            map.addLayer({
+                'id': 'geojson-data-vine-layer',
+                'type': 'circle',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                    'circle-color': '#b68ae5',
+                    'circle-radius': 5,
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Point'],
+                    ['has', 'vine_id']
+                ]
+            });
+
+            // Add a popup on click of the vine point.
+            map.on('click', 'geojson-data-vine-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Vine ID: ' + properties.vine_id + '<br />' + 
+                        'Grape Number: ' + properties.grape_number
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-vine-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-vine-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // End vine data
+
+            // Mid row area data start
+            map.addLayer({
+                'id': 'geojson-data-mid-row-area-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                        'fill-color': '#6af0ca',
+                        'fill-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'mid_row_area_id'],
+                ]
+            });
+
+            // Add a popup on click of the vine point.
+            map.on('click', 'geojson-data-mid-row-area-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Mid Row Area' + '<br />' + 
+                        'Area: ' + properties.area + ' m<sup>2</sup>'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-mid-row-area-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-mid-row-area-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Mid row area data end
+
+            // Mid row line data end
+            map.addLayer({
+                'id': 'geojson-data-mid-row-line-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#7ab4f5',
+                    'line-width': 4
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'LineString'],
+                    ['has', 'mid_row_line_id']
+                ]
+            });
+
+            // Add a popup on click of the vine point.
+            map.on('click', 'geojson-data-mid-row-line-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Mid Row Line' + '<br / >' + 
+                        'ID: ' + properties.mid_row_line_id + '<br / >' + 
+                        'Length: ' + properties.length + ' m'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-mid-row-line-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-mid-row-line-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Mid row line data end
+
+            // Function to toggle visibility of points
+            function togglePointVisibility() {
+                var isChecked = document.getElementById('showPoints').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                
+                map.setLayoutProperty('geojson-data-points-layer', 'visibility', visibility);
+            }
+
+            // Topo map points data start
+            map.addLayer({
+                'id': 'geojson-data-topo-map-points-layer',
+                'type': 'circle',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                    'circle-color': '#d6fffe',
+                    'circle-radius': 6,
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Point'],
+                    ['has', 'topo_map_node_id']
+                ]
+            });
+
+            // Add click event listener for the points layer
+            map.on('click', 'geojson-data-topo-map-points-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Topological Map Node' + '<br />' + 
+                        'ID: ' + properties.topo_map_node_id
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points layer
+            map.on('mouseenter', 'geojson-data-topo-map-points-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change the cursor back to default when it leaves the points layer
+            map.on('mouseleave', 'geojson-data-topo-map-points-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Topo map points data end
+
+            // Topo map lines data start
+            map.addLayer({
+                'id': 'geojson-data-topo-map-lines-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#d6fffe',
+                    'line-width': 4
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'LineString'],
+                    ['has', 'topo_map_edge_id']
+                ]
+            });
+
+            // Add click event listener for the points layer
+            map.on('click', 'geojson-data-topo-map-lines-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Topological Map Edge' + '<br />' + 
+                        'ID: ' + properties.topo_map_edge_id
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points layer
+            map.on('mouseenter', 'geojson-data-topo-map-lines-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change the cursor back to default when it leaves the points layer
+            map.on('mouseleave', 'geojson-data-topo-map-lines-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Topo map lines data end
+
+            // Vineyard polygon data start
+            map.addLayer({
+                'id': 'geojson-data-vineyard-polygons-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                        'fill-color': '#59d5d9',
+                        'fill-opacity': 0.5
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'Polygon'],
+                    ['has', 'vineyard_id']
+                ]
+            });
+
+            map.on('click', 'geojson-data-vineyard-polygons-layer', function (e) {
+                var properties = e.features[0].properties;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Name: ' + properties.name + '<br />' + 
+                        'Owner: ' + properties.owner + '<br />' + 
+                        'Address: ' + properties.street_address + '<br />' +
+                        'Area: ' + properties.area + ' m<sup>2</sup>' + '<br />' +
+                        'Perimeter: ' + properties.perimeter + ' m'
+                    )
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the points
+            map.on('mouseenter', 'geojson-data-vineyard-polygons-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'geojson-data-vineyard-polygons-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Vineyard polygons data end
+
+            // Function to toggle visibility of lines
+            function toggleLineVisibility() {
+                var isChecked = document.getElementById('showLines').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                
+                map.setLayoutProperty('geojson-data-lines-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of polygons
+            function togglePolygonVisibility() {
+                var isChecked = document.getElementById('showPolygons').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                
+                map.setLayoutProperty('geojson-data-polygons-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of vine rows
+            function toggleVineRowVisibility() {
+                var isChecked = document.getElementById('showVineRows').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                
+                map.setLayoutProperty('geojson-data-vine-row-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of blocks
+            function toggleBlockVisibility() {
+                var isChecked = document.getElementById('showBlocks').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                
+                map.setLayoutProperty('geojson-data-block-layer', 'visibility', visibility);
+                map.setLayoutProperty('geojson-data-block-outline-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of area blocks
+            function toggleBlockAreaVisibility() {
+                var isChecked = document.getElementById('showBlockAreaPolygon').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                
+                map.setLayoutProperty('geojson-data-block-area-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of lines posts
+            function toggleAnchorLinesVisibility() {
+                var isChecked = document.getElementById('showAnchorLines').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-anchor-post-line-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of anchor posts
+            function toggleAnchorPostVisibility() {
+                var isChecked = document.getElementById('showAnchorPosts').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-anchor-post-point-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of under vine area
+            function toggleUnderVineAreasVisibility() {
+                var isChecked = document.getElementById('showUnderVineAreas').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-under-vine-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of mid row areas polygons
+            function toggleMidRowAreasVisibility() {
+                var isChecked = document.getElementById('showMidRowAreas').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-mid-row-area-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of mid row lines
+            function toggleMidRowLinesVisibility() {
+                var isChecked = document.getElementById('showMidRowLines').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-mid-row-line-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of vines
+            function toggleVinesVisibility() {
+                var isChecked = document.getElementById('showVines').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-vine-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of vines grape number
+            function toggleVinesGrapeNumberVisibility() {
+                var isChecked = document.getElementById('showVinesGrapeNumber').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                var legendDisplay = isChecked ? 'block' : 'none';
+
+                map.setLayoutProperty('geojson-data-vine-grape-number-layer', 'visibility', visibility);
+
+                // Show or hide the legend
+                document.getElementById('legend').style.display = legendDisplay;
+            }
+
+            // Function to toggle visibility of vine row boundaries
+            function toggleVineRowBoundariesVisibility() {
+                var isChecked = document.getElementById('showVineRowBoundaries').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-vine-row-boundaries-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of topological map
+            function toggleTopologicalMapVisibility() {
+                var isChecked = document.getElementById('showTopologicalMap').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-topo-map-points-layer', 'visibility', visibility);
+                map.setLayoutProperty('geojson-data-topo-map-lines-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of topological map
+            function toggleVineyardPolygonVisibility() {
+                var isChecked = document.getElementById('showVineyardPolygon').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-vineyard-polygons-layer', 'visibility', visibility);
+                map.setLayoutProperty('geojson-data-vineyard-polygons-layer', 'visibility', visibility);
+            }
+
+            // Event listener for checkbox change
+            document.getElementById('showPoints').addEventListener('change', togglePointVisibility);
+            document.getElementById('showLines').addEventListener('change', toggleLineVisibility);
+            document.getElementById('showPolygons').addEventListener('change', togglePolygonVisibility);
+            document.getElementById('showVineyardPolygon').addEventListener('change', toggleVineyardPolygonVisibility);
+            document.getElementById('showVineRows').addEventListener('change', toggleVineRowVisibility);
+            document.getElementById('showBlocks').addEventListener('change', toggleBlockVisibility);
+            document.getElementById('showBlockAreaPolygon').addEventListener('change', toggleBlockAreaVisibility);
+            document.getElementById('showAnchorLines').addEventListener('change', toggleAnchorLinesVisibility);
+            document.getElementById('showAnchorPosts').addEventListener('change', toggleAnchorPostVisibility);
+            document.getElementById('showUnderVineAreas').addEventListener('change', toggleUnderVineAreasVisibility);
+            document.getElementById('showMidRowLines').addEventListener('change', toggleMidRowLinesVisibility);
+            document.getElementById('showMidRowAreas').addEventListener('change', toggleMidRowAreasVisibility);
+            document.getElementById('showVines').addEventListener('change', toggleVinesVisibility);
+            document.getElementById('showVinesGrapeNumber').addEventListener('change', toggleVinesGrapeNumberVisibility);
+            document.getElementById('showVineRowBoundaries').addEventListener('change', toggleVineRowBoundariesVisibility);
+            document.getElementById('showTopologicalMap').addEventListener('change', toggleTopologicalMapVisibility);            
+
+            // Show all checkbox
+            document.getElementById('showAll').addEventListener('change', function() {
+                var isChecked = document.getElementById('showAll').checked;
+                
+                // Check or uncheck all checkboxes based on the state of the "Show All" checkbox
+                var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(function(checkbox) {
+                    checkbox.checked = isChecked;
+                });
+        
+                // Trigger the visibility toggle functions for each checkbox
+                togglePointVisibility();
+                toggleLineVisibility();
+                togglePolygonVisibility();
+                toggleVineyardPolygonVisibility();
+                toggleVineRowVisibility();
+                toggleBlockVisibility();
+                toggleBlockAreaVisibility();
+                toggleAnchorLinesVisibility();
+                toggleAnchorPostVisibility();
+                toggleUnderVineAreasVisibility();
+                toggleMidRowLinesVisibility();
+                toggleMidRowAreasVisibility();
+                toggleVinesVisibility();
+                toggleVinesGrapeNumberVisibility();
+                toggleVineRowBoundariesVisibility();
+                toggleTopologicalMapVisibility();
+            });
+            // Show all checkbox
+
+            // Initially toggle visibility based on checkbox state
+            togglePointVisibility();
+            toggleLineVisibility();
+            togglePolygonVisibility();
+            toggleVineyardPolygonVisibility();
+            toggleVineRowVisibility();
+            toggleBlockVisibility();
+            toggleBlockAreaVisibility();
+            toggleAnchorLinesVisibility();
+            toggleAnchorPostVisibility();
+            toggleUnderVineAreasVisibility();
+            toggleMidRowLinesVisibility();
+            toggleMidRowAreasVisibility();
+            toggleVinesVisibility();
+            toggleVinesGrapeNumberVisibility();
+            toggleVineRowBoundariesVisibility();
+            toggleTopologicalMapVisibility();
+
+            
+
+
+
+
+            
+          
+            // // Calculate total area of all block polygons
+            // map.on('data', (e) => {
+            //     if (e.sourceId === 'geojson-data' && e.isSourceLoaded) {
+            //         const geojson = map.getSource('geojson-data');
+            //         console.log("geojson", geojson)
+            //         const blockPolygons = geojson._data.features.filter(feature => feature.properties.block_id);
+
+            //         let totalArea = 0;
+            //         blockPolygons.forEach(feature => {
+            //             const area = turf.area(feature);
+            //             totalArea += area;
+            //         });
+
+            //         console.log('Total Area of Blocks:', totalArea, 'square meters');
+
+            //         // Update the content of the <p> element with the total area
+            //         const totalAreaElement = document.getElementById('totalBlockArea');
+            //         totalAreaElement.innerText = `Total Area: ${totalArea.toFixed(2)} m²`;
+            //     }
+            // });
+
+        });
+    </script>
+
+</body>
+</html>

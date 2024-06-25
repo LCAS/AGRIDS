@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"> <!-- MapBox -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script> <!-- MapBox -->
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> <!-- Apex Charts Graphs -->
+
+    <title>MapBox Geojson File</title>
+</head>
+<body>
+    <div class="container">
+        <div class="info">
+            <h1>MapBox Geojson File</h1>
+            <a href="/">Main</a>
+            <a href="vine">Vine</a>
+            <a href="vine_all">All Vines</a>
+            <a href="vine_add">Add Vines</a>
+            <a href="vinerow">Vine Row</a>
+            <a href="vinerow_all">All Vine Rows</a>
+            <a href="vinerow_add">Add Vine Rows</a>
+            <a href="block">Block</a>
+            <a href="block_all">All Blocks</a>
+            <a href="block_add">Add Blocks</a>
+            <a href="create_map">Create Map</a>
+            <a href="import_csv">Import CSV</a>
+        </div>
+        <!-- Add a div to hold the map -->
+        <div id="map" style="height: 70vh; width: 80vw;"></div>
+
+        <fieldset>
+            <label for="showAllBlocks">Show Blocks</label>
+            <input type="checkbox" id="showAllBlocks" checked>
+        </fieldset>
+
+        <fieldset>
+            <label for="showAllVineRows">Show Vine Rows</label>
+            <input type="checkbox" id="showAllVineRows" checked>
+        </fieldset>
+
+        <fieldset>
+            <label for="showAllPoints">Show Points</label>
+            <input type="checkbox" id="showAllPoints" checked>
+        </fieldset>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoiam9uZGF2ZTI4OSIsImEiOiJjbHYyaW1rdjAwZmcwMnJwOGJpa3ZoaGpuIn0.2siN69K4PV8jgRZaIFlOjA';
+
+        const map = new mapboxgl.Map({
+            container: 'map', // container ID
+            style: 'mapbox://styles/mapbox/satellite-v9', // style URL
+            center: [-0.9774901527388773,51.59721290965866],
+            zoom: 15
+        });
+
+        map.on('load', () => {
+            map.addSource('vineyard', {
+                type: 'geojson',
+                // Use a URL for the value for the `data` property.
+                data: '{{ url_for("static", filename="jojos_vineyard.geojson") }}'
+            });
+
+            map.addLayer({
+                'id': 'vineyard-points',
+                'type': 'circle',
+                'source': 'vineyard',
+                'paint': {
+                    'circle-radius': 4,
+                    'circle-stroke-width': 2,
+                    'circle-color': 'red',
+                    'circle-stroke-color': 'white'
+                }
+            });
+
+            map.addLayer({
+                'id': 'vineyard-polygon',
+                'type': 'fill',
+                'source': 'vineyard',
+                'paint': {
+                    'fill-color': '#0080ff',
+                    'fill-opacity': 0.5
+                },
+                'layout': {
+                    'visibility': 'visible' // Initially visible
+                }
+            });
+
+            map.addLayer({
+                'id': 'vineyard-line',
+                'type': 'line',
+                'source': 'vineyard',
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#BF93E4',
+                    'line-width': 5
+                },
+                'layout': {
+                    'visibility': 'visible' // Initially visible
+                }
+            });
+
+            // Function to toggle layer visibility based on checkbox state
+            function toggleLayer(layerId, checkboxId) {
+                const checkbox = document.getElementById(checkboxId);
+                map.setLayoutProperty(layerId, 'visibility', checkbox.checked ? 'visible' : 'none');
+            }
+
+            // Add event listeners to checkboxes
+            document.getElementById('showAllBlocks').addEventListener('change', () => {
+                toggleLayer('vineyard-polygon', 'showAllBlocks');
+            });
+
+            document.getElementById('showAllVineRows').addEventListener('change', () => {
+                toggleLayer('vineyard-line', 'showAllVineRows');
+            });
+
+            document.getElementById('showAllPoints').addEventListener('change', () => {
+                toggleLayer('vineyard-points', 'showAllPoints');
+            });
+        });
+    </script>
+
+</body>
+</html>

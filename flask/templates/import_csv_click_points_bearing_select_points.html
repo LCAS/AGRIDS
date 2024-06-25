@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"> <!-- MapBox -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script> <!-- MapBox -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.3.0/mapbox-gl-draw.css" rel="stylesheet">
+    <!-- MapBox Draw Tools -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.3.0/mapbox-gl-draw.js"></script>
+    <!-- MapBox Draw Tools -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.3.0/turf.min.js"></script>
+    <!-- Turf library for geospatial calculations -->
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> <!-- Apex Charts Graphs -->
+
+    <title>AGRIDS Map - Import CSV Unlabelled Rows</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="info">
+            <h1>AGRIDS Map - Import CSV Unlabelled Rows</h1>
+            <p>Upload CSV with end post locaitons, (optional draw a polygon around groups of points to be linked by
+                lines), then click on two points which represent a row (in each polygon), then click on generate lines.
+            </p>
+            <!--<a href="/">Main</a>
+            <a href="vine">Vine</a>
+            <a href="vine_all">All Vines</a>
+            <a href="vine_add">Add Vines</a>
+            <a href="vinerow">Vine Row</a>
+            <a href="vinerow_all">All Vine Rows</a>
+            <a href="vinerow_add">Add Vine Rows</a>
+            <a href="block">Block</a>
+            <a href="block_all">All Blocks</a>
+            <a href="block_add">Add Blocks</a>-->
+            <a href="vineyard_geojson_orion">View Vineyard</a>
+            <a href="create_map">Create Map</a>
+            <a href="import_csv">Import Labelled End Posts</a>
+            <!--<a href="import_csv_click_points">Import CSV with End Posts</a>-->
+            <!--<a href="import_csv_click_points_bearing">Import CSV with End Posts Generate Rows</a>-->
+            <a href="import_csv_click_points_bearing_select_points">Import Unlabelled End Posts</a>
+
+            <!--<br />
+
+            <p>{{  geojson_feature_collection  }}</p>-->
+        </div>
+        <!-- Add a div to hold the map -->
+        <div id="map" style="height: 70vh; width: 80vw;"></div>
+
+        <fieldset>
+            <form method="post" name="upload_csv_form" enctype="multipart/form-data">
+                <input type="hidden" name="button_csv_upload" value="">
+                <input type="file" name="csv_file" accept=".csv" required>
+                <input type="submit" name="upload_csv" value="Upload">
+            </form>
+
+            <br />
+
+            <button id="toggleEditButton">Edit Properties</button> |
+            <button id="generateLinesButton">Generate Lines</button> |
+            <button id="undoButton">Undo</button> |
+            <button id="downloadButton">Download GeoJSON</button>
+
+            <br />
+            <br />
+
+            <label>Vineyard Data:</label>
+            <input type="text" id="vineyard_id" name="vineyard_id" placeholder="Enter Vineyard ID"> |
+            <input type="text" id="vineyard_name" name="vineyard_name" placeholder="Enter Vineyard Name"> |
+            <input type="text" id="street_address" name="street_address" placeholder="Enter Address"> |
+            <input type="text" id="owner" name="owner" placeholder="Enter Owner"> |
+            <button id="saveButton" name="button_save" disabled>Save</button>
+
+            <p id="message"></p>
+        </fieldset>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoiam9uZGF2ZTI4OSIsImEiOiJjbHYyaW1rdjAwZmcwMnJwOGJpa3ZoaGpuIn0.2siN69K4PV8jgRZaIFlOjA';
+
+        var geojson_feature_collection = {{ geojson_feature_collection | tojson | safe }};
+
+        // Flag to track whether editing is enabled
+        var isEditing = true;
+
+        const map = new mapboxgl.Map({
+            container: 'map', // container ID
+            style: 'mapbox://styles/mapbox/satellite-streets-v12', // style URL
+            //center: [-0.9772342405497342, 51.59632509886086],
+            //zoom: 17
+            center: [-1.2666543598498297, 52.57484078987165],
+            zoom: 7
+        });
+
+        // Add zoom and rotation controls to the map.
+        map.addControl(new mapboxgl.NavigationControl());
+
+        // Function to calculate the bounding box of GeoJSON features
+        function calculateBoundingBox(features) {
+            var bounds = new mapboxgl.LngLatBounds();
+            features.forEach(function (feature) {
+                if (feature.geometry.type === 'Point') {
+                    bounds.extend(feature.geometry.coordinates);
+                } else if (feature.geometry.type === 'LineString') {
+                    feature.geometry.coordinates.forEach(function (coord) {
+                        bounds.extend(coord);
+                    });
+                } else if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates[0].forEach(function (coord) {
+                        bounds.extend(coord);
+                    });
+                }
+            });
+            return bounds;
+        }
+
+        // Function to update properties of the clicked polygon
+        function updateProperties(clickedFeatureIndex) {
+            //console.log("Update properties function called with clickedFeatureIndex:", clickedFeatureIndex);
+
+            var blockName = document.getElementById('blockNameInput').value;
+            var shortCode = document.getElementById('shortCodeInput').value;
+            var variety = document.getElementById('varietyInput').value;
+            var vineSpacing = parseFloat(document.getElementById('vineSpacingInput').value);
+            var underVineWidth = parseFloat(document.getElementById('underVineWidthInput').value);
+            var anchorPostDistance = parseFloat(document.getElementById('anchorPostDistanceInput').value);
+
+            //console.log("Block Name:", blockName);
+            //console.log("Short Code:", shortCode);
+
+            // Update properties of the clicked polygon
+            var updatedProperties = {
+                type: "block",
+                blockName: blockName,
+                shortCode: shortCode,
+                variety: variety,
+                vineSpacing: vineSpacing,
+                underVineWidth: underVineWidth,
+                anchorPostDistance: anchorPostDistance
+            };
+
+            // Update the GeoJSON data
+            var source = map.getSource('geojson-data');
+
+            if (!source) {
+                console.error("Source 'geojson-data' not found.");
+                return;
+            }
+
+            var features = source._data.features; // Get all features
+
+            //console.log("All Features:", features);
+            //console.log("Clicked Feature Index:", clickedFeatureIndex);
+
+            // Check if the clicked feature index is valid
+            if (clickedFeatureIndex < 0 || clickedFeatureIndex >= features.length) {
+                console.error("Clicked feature index is out of bounds.");
+                return;
+            }
+
+            // Update the properties of the clicked feature
+            features[clickedFeatureIndex].properties = updatedProperties;
+
+            // Set the updated GeoJSON data back to the source
+            source.setData({ type: 'FeatureCollection', features: features });
+
+            // Close the popup
+            //map.getCanvas().style.cursor = '';
+            //map.closePopup();
+
+            //console.log("geojson_feature_collection", geojson_feature_collection)
+        }
+
+        // Add GeoJSON data as a data source
+        map.on('load', function () {
+            map.addSource('geojson-data', {
+                type: 'geojson',
+                //promoteId: 'unique_id',
+                generateId: true,
+                data: geojson_feature_collection
+            });
+
+            // // Add GeoJSON data as a layer
+            // map.addLayer({
+            //     'id': 'geojson-data-layer',
+            //     'type': 'line',
+            //     'source': 'geojson-data',
+            //     'layout': {
+            //         'line-join': 'round',
+            //         'line-cap': 'round'
+            //     },
+            //     'paint': {
+            //         'line-color': '#7af58f',
+            //         'line-width': 2
+            //     }
+            // });
+
+            // Add layers for different GeoJSON types
+            map.addLayer({
+                'id': 'geojson-data-polygons-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'paint': {
+                    'fill-color': '#0080ff',
+                    'fill-opacity': 0.5
+                },
+                'filter': ['==', '$type', 'Polygon'] // Filter polygons
+            });
+
+            // Add the line layer for block outlines
+            map.addLayer({
+                'id': 'geojson-data-polygons-outline-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'minzoom': 15,
+                'paint': {
+                    'line-color': '#000000',
+                    'line-width': 2,
+                    'line-opacity': 0.5
+                },
+                'filter': ['==', '$type', 'Polygon'] // Filter polygons
+            });
+
+            map.addLayer({
+                'id': 'geojson-data-drawn-lines-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'paint': {
+                    'line-color': '#59d5d9',
+                    'line-width': 2
+                },
+                'filter': ['all',
+                    ['==', '$type', 'LineString'], // Filter lines                
+                    ['has', 'drawn_line']
+                ]
+            });
+
+            map.addLayer({
+                'id': 'geojson-data-lines-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'paint': {
+                    'line-color': '#7af58f',
+                    'line-width': 2
+                },
+                'filter': ['all',
+                    ['==', '$type', 'LineString'], // Filter lines                
+                    ['has', 'Row']
+                ]
+            });
+
+            map.addLayer({
+                'id': 'geojson-data-points-layer',
+                'type': 'circle',
+                'source': 'geojson-data',
+                'layout': {},
+                'paint': {
+                    //'circle-color': '#ff0000',
+                    'circle-radius': 5,
+                    'circle-color': [
+                        'case',
+                        ['boolean', ['feature-state', 'joined'], false],
+                        '#ff0000',
+                        '#f5e216'
+                    ]
+                },
+                'filter': ['==', '$type', 'Point'] // Filter points
+            });
+
+            // Initialy set the data to hidden
+            map.setLayoutProperty('geojson-data-polygons-layer', 'visibility', 'none');
+            map.setLayoutProperty('geojson-data-polygons-outline-layer', 'visibility', 'none');
+            map.setLayoutProperty('geojson-data-lines-layer', 'visibility', 'none');
+            map.setLayoutProperty('geojson-data-points-layer', 'visibility', 'none');
+
+            // Lines popup script
+            // Add click event listener
+            map.on('click', 'geojson-data-lines-layer', function (e) {
+                var rowNumber = e.features[0].properties.Row;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML('Row Number: ' + rowNumber)
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the line layer
+            map.on('mouseenter', 'geojson-data-lines-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to the default cursor when it leaves
+            map.on('mouseleave', 'geojson-data-lines-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Lines popup script
+
+            // Polygons popup script
+            // Add click event listener
+            map.on('click', 'geojson-data-polygons-layer', function (e) {
+                var blockName = e.features[0].properties.blockName || ''; // Set default value to empty string if not defined
+                var shortCode = e.features[0].properties.shortCode || '';
+                var variety = e.features[0].properties.variety || '';
+                var vineSpacing = e.features[0].properties.vineSpacing || '';
+                var underVineWidth = e.features[0].properties.underVineWidth || '';
+                var anchorPostDistance = e.features[0].properties.anchorPostDistance | '';
+
+                var features = map.queryRenderedFeatures(e.point, { layers: ['geojson-data-polygons-layer'] });
+                var clickedFeatureId = features[0].id;
+                //console.log("clickedFeatureId click function:", clickedFeatureId);
+
+                // Create a popup with input fields for block name and short code
+                var popupContent = document.createElement('div');
+                popupContent.innerHTML = `
+                    Enter Block ${blockName} Details:
+                    <br />
+                    Name:
+                    <br />
+                    <input type="text" id="blockNameInput" placeholder="Enter Block Name" value="${blockName}">
+                    <br />
+                    Short Code:
+                    <br />
+                    <input type="text" id="shortCodeInput" placeholder="Enter Short Code" value="${shortCode}">
+                    <br />
+                    Variety:
+                    <br />
+                    <input type="text" id="varietyInput" placeholder="Enter Variety" value="${variety}">
+                    <br />
+                    Vine Spacing (m):
+                    <br />
+                    <input type="text" id="vineSpacingInput" placeholder="Enter Vine Spacing" value="${vineSpacing}">
+                    <br />
+                    Under Vine Width (m):
+                    <br />
+                    <input type="text" id="underVineWidthInput" placeholder="Under Vine Width" value="${underVineWidth}">
+                    <br />
+                    Anchor Post Distance (m):
+                    <br />
+                    <input type="text" id="anchorPostDistanceInput" placeholder="Anchor Post Distance" value="${anchorPostDistance}">
+                    <br />
+
+                    <input type="button" value="Save" onclick="updateProperties('${clickedFeatureId}')">
+                `;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setDOMContent(popupContent)
+                    .addTo(map);
+            });
+
+            // Change the cursor to a pointer when the mouse is over the polygon layer
+            map.on('mouseenter', 'geojson-data-polygons-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to the default cursor when it leaves
+            map.on('mouseleave', 'geojson-data-polygons-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Polygons popup script            
+
+            // Calculate the bounding box of the GeoJSON features
+            var bounds = calculateBoundingBox(geojson_feature_collection.features);
+
+            // Set the map's center and zoom level based on the bounding box
+            map.fitBounds(bounds, { padding: 20 }); // Adjust padding as needed
+
+            // Initialize Mapbox Draw
+            var draw = new MapboxDraw({
+                displayControlsDefault: false,
+                controls: {
+                    polygon: true,
+                    trash: true,
+                    point: true,
+                    line_string: true,
+                    combine_features: true,
+                    uncombine_features: true,
+                    direct_select: true
+                }
+            });
+
+            // Add Draw control to the map
+            map.addControl(draw);
+            draw.add(geojson_feature_collection);
+
+            // History for undo button
+            var historyStack = [];
+
+            // Push the initial state onto the history stack
+            historyStack.push(draw.getAll());
+
+            map.on('draw.create', function (e) {
+                var geojson = draw.getAll();
+                historyStack.push(geojson);
+                updateGeoJSON();
+            });
+
+            map.on('draw.update', function (e) {
+                var geojson = draw.getAll();
+                historyStack.push(geojson);
+                updateGeoJSON();
+            });
+
+            map.on('draw.delete', function (e) {
+                var geojson = draw.getAll();
+                historyStack.push(geojson);
+                updateGeoJSON();
+            });
+
+            function updateGeoJSON() {
+                var geojson = draw.getAll();
+                geojson_feature_collection = geojson;
+                map.getSource('geojson-data').setData(geojson_feature_collection);
+            }
+
+            function undo() {
+                if (isEditing) {
+                    if (historyStack.length > 1) {
+                        historyStack.pop(); // Remove the current state
+                        var previousState = historyStack[historyStack.length - 1]; // Get the previous state
+                        draw.deleteAll(); // Remove all existing features
+                        draw.add(previousState); // Add features from the previous state
+                        updateGeoJSON();
+                    }
+                }
+            }
+
+            document.getElementById('undoButton').addEventListener('click', undo);
+
+            function toggleEditing() {
+                if (isEditing) {
+                    // Disable editing
+                    map.removeControl(draw);
+                    map.setLayoutProperty('geojson-data-polygons-layer', 'visibility', 'visible');
+                    map.setLayoutProperty('geojson-data-polygons-outline-layer', 'visibility', 'visible');
+                    map.setLayoutProperty('geojson-data-lines-layer', 'visibility', 'visible');
+                    map.setLayoutProperty('geojson-data-points-layer', 'visibility', 'visible');
+                    document.getElementById('undoButton').disabled = true;
+                    //document.getElementById('saveButton').disabled = false;
+                    document.getElementById("toggleEditButton").innerText = "Edit Geometries";
+                    isEditing = false;
+                } else {
+                    // Enable editing
+                    map.addControl(draw);
+                    draw.add(geojson_feature_collection);
+                    map.setLayoutProperty('geojson-data-polygons-layer', 'visibility', 'none');
+                    map.setLayoutProperty('geojson-data-polygons-outline-layer', 'visibility', 'none');
+                    map.setLayoutProperty('geojson-data-lines-layer', 'visibility', 'none');
+                    map.setLayoutProperty('geojson-data-points-layer', 'visibility', 'none');
+                    document.getElementById('undoButton').disabled = false;
+                    //document.getElementById('saveButton').disabled = true;
+                    document.getElementById("toggleEditButton").innerText = "Edit Properties";
+                    isEditing = true;
+                }
+            }
+
+            document.getElementById('toggleEditButton').addEventListener('click', toggleEditing);
+
+            // Function to download GeoJSON  
+            function downloadGeoJSON() {
+                // Filter out only LineString features
+                var lineStringFeatures = geojson_feature_collection.features.filter(function (feature) {
+                    return feature.geometry.type === 'LineString';
+                });
+
+                // Create a GeoJSON Feature Collection object with only LineString features
+                var lineStringFeatureCollection = {
+                    type: 'FeatureCollection',
+                    features: lineStringFeatures
+                };
+
+                // Convert the GeoJSON object to a string
+                var geojsonString = JSON.stringify(lineStringFeatureCollection);
+
+                // Create a Blob from the GeoJSON string
+                var blob = new Blob([geojsonString], { type: 'application/json' });
+
+                // Create a URL for the Blob
+                var url = URL.createObjectURL(blob);
+
+                // Create an anchor element to trigger the download
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'edited_geojson_data.geojson';
+
+                // Append the anchor element to the document body and trigger a click event
+                document.body.appendChild(a);
+                a.click();
+
+                // Remove the anchor element from the document body
+                document.body.removeChild(a);
+            }
+
+            document.getElementById('downloadButton').addEventListener('click', downloadGeoJSON);
+
+            // Click on two points to create a line start
+            // Store clicked point coordinates
+            var clickedPoints = [];
+
+            // Function to draw a line between two points
+            function drawLineBetweenPoints(point1, point2) {
+                var lineString = {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': [point1, point2]
+                    },
+                    'properties': {
+                        'drawn_line': true
+                    }
+                };
+                // Add the line feature to the GeoJSON data
+                geojson_feature_collection.features.push(lineString);
+                // Refresh the map data
+                map.getSource('geojson-data').setData(geojson_feature_collection);
+                // Push the current state onto the history stack
+                historyStack.push(JSON.parse(JSON.stringify(geojson_feature_collection))); // Deep copy to avoid reference issues
+            }
+
+            // Add click event listener to points layer
+            map.on('click', 'geojson-data-points-layer', function (e) {
+                var clickedPointCoordinates = e.features[0].geometry.coordinates;
+                clickedPoints.push(clickedPointCoordinates);
+                // If two points are clicked, draw a line between them
+                if (clickedPoints.length === 2) {
+                    drawLineBetweenPoints(clickedPoints[0], clickedPoints[1]);
+                    clickedPoints = []; // Reset clicked points array
+                }
+            });
+
+            // Change cursor style when hovering over points layer
+            map.on('mouseenter', 'geojson-data-points-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Reset cursor style when leaving points layer
+            map.on('mouseleave', 'geojson-data-points-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Click on two points to create a line end
+
+
+
+
+
+
+
+            document.getElementById('generateLinesButton').addEventListener('click', function () {
+                // Get all the points from the feature collection
+                var pointFeatures = geojson_feature_collection.features.filter(function (feature) {
+                    return feature.geometry.type === 'Point';
+                });
+
+                // Loop through all point features and set colours
+                pointFeatures.forEach(function (pointFeature) {
+                    // Get the unique identifier of the current point feature
+                    var pointID = pointFeature.id;
+                    // Change the colour of the point by setting its feature state
+                    var index = findFeatureIndexById(geojson_feature_collection, pointID);
+                    //console.log("index", index)
+                    map.setFeatureState(
+                        { source: 'geojson-data', id: index },
+                        { joined: false }
+                    );
+                });
+
+                // Get all the polygons from the feature collection
+                var polygonFeatures = geojson_feature_collection.features.filter(function (feature) {
+                    return feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon';
+                });
+
+                // Get all the linestrings from the feature collection
+                var lineFeatures = geojson_feature_collection.features.filter(function (feature) {
+                    return feature.geometry.type === 'LineString';
+                });
+
+                // Remove the input lines from the GeoJSON
+                geojson_feature_collection.features = geojson_feature_collection.features.filter(function (feature) {
+                    return feature.geometry.type !== 'LineString';
+                });
+
+                var rowNumber = 1; // Initialize the row number
+
+                var pointsWithPartner = []; // Array to store points with partners
+
+                var nonPoygonDrawn = false;
+
+                // Check if there are no polygons
+                if (polygonFeatures.length === 0) {
+                    //alert('Please draw polygon around the points.');
+                    var convexHull = turf.convex(geojson_feature_collection);
+
+                    // Buffer the convex hull to add padding
+                    var bufferedPolygon = turf.buffer(convexHull, 0.5, { units: 'meters' });
+
+                    // Convert the convex hull to Mapbox format
+                    var polygon = {
+                        "type": "Feature",
+                        "properties": {},
+                        "geometry": bufferedPolygon.geometry
+                    };
+
+                    geojson_feature_collection.features.push(polygon);
+
+                    // Refresh the map data
+                    map.getSource('geojson-data').setData(geojson_feature_collection);
+
+                    nonPoygonDrawn = true;
+                }
+
+                // Iterate over each polygon and find points and lines within it
+                geojson_feature_collection.features.forEach(function (feature) {
+                    if (feature.geometry.type === 'Polygon') {
+                        // Get the coordinates of the polygon
+                        var polygonCoordinates = feature.geometry.coordinates[0];
+
+                        // Find all line strings within the polygon
+                        var lineStringsWithinPolygon = lineFeatures.filter(function (lineFeature) {
+                            return turf.booleanWithin(turf.lineString(lineFeature.geometry.coordinates), turf.polygon([polygonCoordinates]));
+                        });
+
+                        if (lineStringsWithinPolygon.length > 1) {
+                            alert('There is more than one line in an area, the first line drawn will be used.');
+                        }
+
+                        // Find the first linestring within the polygon
+                        var linestringWithinPolygon = lineFeatures.find(function (lineFeature) {
+                            return turf.booleanWithin(turf.lineString(lineFeature.geometry.coordinates), turf.polygon([polygonCoordinates]));
+                        });
+
+                        if (linestringWithinPolygon) {
+                            // Calculate the bearing of the linestring within the polygon
+                            var bearing = turf.bearing(turf.point(linestringWithinPolygon.geometry.coordinates[0]), turf.point(linestringWithinPolygon.geometry.coordinates[linestringWithinPolygon.geometry.coordinates.length - 1]));
+
+                            // For each point feature within the polygon, find the partner point
+                            pointFeatures.forEach(function (pointFeature, index) {
+                                if (turf.booleanPointInPolygon(turf.point(pointFeature.geometry.coordinates), turf.polygon([polygonCoordinates]))) {
+                                    var partnerPoint = findPartnerPointWithinFeatureCollection(pointFeature.geometry.coordinates, bearing, polygonCoordinates);
+                                    if (partnerPoint) {
+                                        pointsWithPartner.push(pointFeature);
+                                        pointsWithPartner.push(partnerPoint);
+
+                                        // Get partner point ID and coordinates
+                                        var partnerPointID = partnerPoint.id;
+                                        var partnerPointCoordinates = partnerPoint.coordinates;
+
+                                        // Create a line string feature using the partner point's coordinates
+                                        var lineStringFeature = createLineStringFeature(pointFeature.geometry.coordinates, partnerPointCoordinates, rowNumber++);
+                                        geojson_feature_collection.features.push(lineStringFeature);
+                                    }
+                                }
+                            });
+
+                            // console.log("pointsWithPartner", pointsWithPartner)
+                            // console.log("pointsWithinPolygonCount", pointsWithinPolygonCount)
+                            // console.log("pointsWithPartner length", pointsWithPartner.length)
+
+                            // // Check if all points within the polygon have a partner
+                            // if (pointsWithinPolygonCount === pointsWithPartner.length) {
+                            //     console.log("All points within the polygon have a partner.");
+                            // } else {
+                            //     console.log("Not all points within the polygon have a partner.");
+                            //     alert('Not all points have been joined.');
+                            // }                            
+
+                        } else {
+                            alert('There must be exactly one line each polygon.');
+                        }
+                    }
+
+                });
+
+                // If no polygon was drwan when csv data loaded then we automatically drew a polygon so now remove it.
+                if (nonPoygonDrawn === true) {
+                    // Find the index of the last added polygon in the feature collection
+                    var lastPolygonIndex = geojson_feature_collection.features.findIndex(function (feature) {
+                        return feature.geometry.type === 'Polygon';
+                    });
+
+                    // Remove the last polygon from the feature collection
+                    if (lastPolygonIndex !== -1) {
+                        geojson_feature_collection.features.splice(lastPolygonIndex, 1);
+                    }
+                }
+
+                // Refresh the map data
+                map.getSource('geojson-data').setData(geojson_feature_collection);
+
+                //console.log("pointsWithPartner", pointsWithPartner)
+                //console.log("pointFeatures", pointFeatures)
+                //console.log("geojson_feature_collection", geojson_feature_collection)
+
+                // Loop through all point features
+                pointFeatures.forEach(function (pointFeature) {
+                    // Get the unique identifier of the current point feature
+                    var pointID = pointFeature.id;
+                    //console.log("pointFeature", pointFeature)
+                    //console.log("pointID", pointID)
+
+                    // Check if the current point has a partner by checking if its ID is in the pointsWithPartnerIDs array
+                    if (!pointsWithPartner.find(point => point.id === pointID)) {
+                        // Log the ID of the point without a partner
+                        //console.log("pointID not joined", pointID);
+
+                        // Change the colour of the point by setting its feature state
+                        var index = findFeatureIndexById(geojson_feature_collection, pointID);
+                        //console.log("index", index)
+                        map.setFeatureState(
+                            { source: 'geojson-data', id: index },
+                            { joined: true }
+                        );
+                    }
+                });
+
+                // Check if all points are joined
+                if (pointsWithPartner.length !== pointFeatures.length) {
+                    alert('Not all points have been joined.');
+                    return;
+                }
+            });
+
+
+
+
+
+
+            // Find the mapbox geojson featrure collection index ID by feature ID
+            function findFeatureIndexById(featureCollection, id) {
+                for (let i = 0; i < featureCollection.features.length; i++) {
+                    if (featureCollection.features[i].id === id) {
+                        return i; // Return the index if ID matches
+                    }
+                }
+                return -1; // Return -1 if ID is not found
+            }
+
+
+
+
+
+            // Helper function to create a LineString feature with a "Row" property
+            function createLineStringFeature(point1, point2, rowNumber) {
+                return {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': [point1, point2]
+                    },
+                    'properties': {
+                        'type': 'row',
+                        'Row': String(rowNumber)
+                    }
+                };
+            }
+
+            // Helper function to find the partner point within the feature collection at a given bearing
+            function findPartnerPointWithinFeatureCollection(origin, bearing, polygonCoordinates) {
+                var pointsWithinPolygon = []; // Array to store points within the polygon
+                var features = geojson_feature_collection.features;
+
+                // Filter points within the polygon
+                features.forEach(function (feature) {
+                    if (feature.geometry.type === 'Point' && turf.booleanPointInPolygon(turf.point(feature.geometry.coordinates), turf.polygon([polygonCoordinates]))) {
+                        pointsWithinPolygon.push(feature);
+                    }
+                });
+
+                // Iterate over points within the polygon to find the partner point
+                for (var i = 0; i < pointsWithinPolygon.length; i++) {
+                    var pointCoordinates = pointsWithinPolygon[i].geometry.coordinates;
+                    var pointBearing = turf.bearing(turf.point(origin), turf.point(pointCoordinates));
+                    if (Math.abs(pointBearing - bearing) < 1) { // Adjust tolerance as needed
+                        // Found partner point at the given bearing
+                        var partnerPointID = pointsWithinPolygon[i].id;
+                        return { id: partnerPointID, coordinates: pointCoordinates };
+                    }
+                }
+                return null; // Partner point not found
+            }
+
+
+            // Save vineyard ID and GeoJSON data to Orion
+            document.getElementById('saveButton').addEventListener('click', function() {
+                // Get the vineyard ID from the input field
+                var vineyardId = document.getElementById('vineyard_id').value;
+                var vineyardName = document.getElementById('vineyard_name').value;
+                var streetAddress = document.getElementById('street_address').value;
+                var owner = document.getElementById('owner').value;
+                console.log("Saved button pressed")
+
+                // Get the GeoJSON data as a string
+                var geojsonString = JSON.stringify(geojson_feature_collection);
+
+                // Prepare the data to send to Flask in JSON format
+                var data = {
+                    vineyard_id: vineyardId,
+                    vineyard_name: vineyardName,
+                    street_address: streetAddress,
+                    owner: owner,
+                    geojson_data: geojsonString
+                };
+
+                // Send a POST request to the Flask endpoint using Fetch API
+                fetch('/import_csv_click_points_bearing_select_points', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Error saving data:', response.statusText);
+                        document.getElementById("message").innerText = `Error saving data: ${response.statusText}`;
+                        return;
+                    }
+                    // Handle successful response (e.g., display a confirmation message)
+                    console.log('Vineyard ID and GeoJSON data saved successfully!');
+                    document.getElementById("message").innerText = `Vineyard: ${vineyardId} GeoJSON data saved successfully!`;
+                })
+                .catch(error => {
+                    console.error('Error saving data:', error);
+                });
+            });
+
+            // Only enable the save button if the vineyard_id and other boxes has some text
+            function checkInputs() {
+                var vineyardId = document.getElementById('vineyard_id').value;
+                var vineyardName = document.getElementById('vineyard_name').value;
+                var streetAddress = document.getElementById('street_address').value;
+                var owner = document.getElementById('owner').value;
+                var saveButton = document.getElementById('saveButton');
+
+                if (vineyardId && vineyardName && streetAddress && owner) {
+                    saveButton.disabled = false;
+                } else {
+                    saveButton.disabled = true;
+                }
+            }
+
+            document.getElementById('vineyard_id').addEventListener('input', checkInputs);
+            document.getElementById('vineyard_name').addEventListener('input', checkInputs);
+            document.getElementById('street_address').addEventListener('input', checkInputs);
+            document.getElementById('owner').addEventListener('input', checkInputs);
+
+
+
+
+
+
+
+
+
+
+
+
+        });
+    </script>
+
+</body>
+
+</html>

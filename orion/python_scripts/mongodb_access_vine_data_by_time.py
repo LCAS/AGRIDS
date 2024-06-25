@@ -1,5 +1,6 @@
 import pymongo
 from datetime import datetime
+import time
 
 def query_recent_values(entity_id, entity_type, num_values):
     # Connect to MongoDB
@@ -35,4 +36,5 @@ results = query_recent_values(entity_id, entity_type, num_values)
 # Print the results
 for result in results:
     formatted_time = result['recvTime'].strftime('%Y-%m-%d %H:%M:%S')  # Format datetime
-    print(f"Timestamp: {formatted_time}, Number of Grapes: {result['attrValue']}")
+    unix_time = int(time.mktime(result['recvTime'].timetuple()))
+    print(f"Timestamp: {formatted_time}, Unix Time: {unix_time}, Number of Grapes: {result['attrValue']}")

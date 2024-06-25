@@ -19,7 +19,7 @@ minio_client = Minio(
 bucket_name = "zenoh-ros2-test" # Buckets cannot contain underscores _
 
 # Define the topic where the image data will be published
-topic = "vista/image_data"
+topic = "agrids/image_data"
 
 # Callback function to handle received image data
 def handle_image_data(data):

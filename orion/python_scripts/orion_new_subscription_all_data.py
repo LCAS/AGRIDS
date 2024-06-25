@@ -33,6 +33,7 @@ def create_subscription(endpoint):
             "http": {
                 "url": endpoint,
             },
+            "onlyChangedAttrs": True  # Set to True to receive only changed attributes
         }
     }
 

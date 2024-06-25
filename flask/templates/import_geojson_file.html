@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <title>VISTA Map - Import GeoJSON File</title>
+</head>
+<body>
+    <div class="container">
+        <div class="info">
+            <h1>VISTA Map - Import GeoJSON File</h1>
+            <!--<a href="/">Main</a>
+            <a href="vine">Vine</a>
+            <a href="vine_all">All Vines</a>
+            <a href="vine_add">Add Vines</a>
+            <a href="vinerow">Vine Row</a>
+            <a href="vinerow_all">All Vine Rows</a>
+            <a href="vinerow_add">Add Vine Rows</a>
+            <a href="block">Block</a>
+            <a href="block_all">All Blocks</a>
+            <a href="block_add">Add Blocks</a>-->
+            <a href="vineyard_geojson_orion">View Vineyard</a>
+            <a href="create_map">Create Map</a>
+            <a href="import_csv">Import CSV with Labelled End Posts</a>
+            <a href="import_csv_click_points">Import CSV with End Posts</a>
+            <!--<a href="import_csv_click_points_bearing">Import CSV with End Posts Generate Rows</a>-->
+            <a href="import_csv_click_points_bearing_select_points">Import CSV with End Posts Generate Rows with Polygons</a>
+        </div>
+
+        <fieldset>
+            <form action="/import_geojson_file" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".geojson" required>
+                <input type="submit" name="upload_geojson" value="Upload" disabled id="uploadButton">
+                
+                <br />
+                <br />
+                
+                <label for="vineyard_id">Vineyard ID:</label>
+                <input type="text" id="vineyard_id" name="vineyard_id" placeholder="Enter Vineyard ID">
+            </form>
+        </fieldset>
+    </div>
+
+    <script>
+         // Add input event listener to the vineyard_id text box
+        document.getElementById('vineyard_id').addEventListener('input', function() {
+            var vineyardId = document.getElementById('vineyard_id').value;
+            var uploadButton = document.getElementById('uploadButton');
+            
+            // Enable the upload button if vineyard_id has text, disable otherwise
+            uploadButton.disabled = !vineyardId;
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet"> <!-- MapBox -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script> <!-- MapBox -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.3.0/mapbox-gl-draw.css" rel="stylesheet"> <!-- MapBox Draw Tools -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.3.0/mapbox-gl-draw.js"></script> <!-- MapBox Draw Tools -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.3.0/turf.min.js"></script> <!-- Turf library for geospatial calculations -->
+
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script> <!-- Apex Charts Graphs -->
+
+    <title>AGRIDS Map - Import CSV labelled Rows</title>
+</head>
+<body>
+    <div class="container">
+        <div class="info">
+            <h1>AGRIDS Map - Import CSV labelled Rows</h1>
+            <p>Upload a CSV file with labelled end posts.</p>
+            <!--<a href="/">Main</a>
+            <a href="vine">Vine</a>
+            <a href="vine_all">All Vines</a>
+            <a href="vine_add">Add Vines</a>
+            <a href="vinerow">Vine Row</a>
+            <a href="vinerow_all">All Vine Rows</a>
+            <a href="vinerow_add">Add Vine Rows</a>
+            <a href="block">Block</a>
+            <a href="block_all">All Blocks</a>
+            <a href="block_add">Add Blocks</a>-->
+            <a href="vineyard_geojson_orion">View Vineyard</a>
+            <a href="create_map">Create Map</a>
+            <a href="import_csv">Import Labelled End Posts</a>
+            <!--<a href="import_csv_click_points">Import CSV with End Posts</a>-->
+            <!--<a href="import_csv_click_points_bearing">Import CSV with End Posts Generate Rows</a>-->
+            <a href="import_csv_click_points_bearing_select_points">Import Unlabelled End Posts</a>
+            
+            <!--<br />
+
+            <p>{{  geojson_feature_collection  }}</p>-->
+        </div>
+        <!-- Add a div to hold the map -->
+        <div id="map" style="height: 70vh; width: 80vw;"></div>
+
+        <fieldset>
+            <!--<label>Show: </label>
+            <label for="showVineRows">Vine Rows</label>
+            <input type="checkbox" id="showVineRows" name="showVineRows" checked> |
+            <label for="showMidRowLines">Mid Row Lines</label>
+            <input type="checkbox" id="showMidRowLines" name="showMidRowLines" checked>
+
+            <br />-->
+            <br />
+            
+            <form action="/import_csv" method="post" enctype="multipart/form-data">
+                <input type="file" name="csv_file" accept=".csv" required>
+                <input type="submit" name="upload_csv" value="Upload"> | 
+
+                <label for="fileHasVineLocations">Vine locations are in file</label>
+                <input type="checkbox" id="fileHasVineLocations" name="fileHasVineLocations">
+            </form>
+
+            <br />
+
+            <button id="toggleEditButton">Edit Properties</button> |
+            <button id="undoButton">Undo</button> |
+            <button id="downloadButton">Download GeoJSON</button>
+
+            <br />
+            <br />
+
+            <label>Vineyard Data:</label>
+            <input type="text" id="vineyard_id" name="vineyard_id" placeholder="Enter Vineyard ID"> |
+            <input type="text" id="vineyard_name" name="vineyard_name" placeholder="Enter Vineyard Name"> |
+            <input type="text" id="street_address" name="street_address" placeholder="Enter Address"> |
+            <input type="text" id="owner" name="owner" placeholder="Enter Owner"> |
+            <button id="saveButton" name="button_save" disabled>Save</button>
+                            
+        </fieldset>
+    </div>
+
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoiam9uZGF2ZTI4OSIsImEiOiJjbHYyaW1rdjAwZmcwMnJwOGJpa3ZoaGpuIn0.2siN69K4PV8jgRZaIFlOjA';
+    
+        var geojson_feature_collection = {{ geojson_feature_collection | tojson | safe }};
+
+        // Flag to track whether editing is enabled
+        var isEditing = true;
+    
+        const map = new mapboxgl.Map({
+            container: 'map', // container ID
+            style: 'mapbox://styles/mapbox/satellite-v9', // style URL
+            //center: [-0.9772342405497342, 51.59632509886086],
+            //zoom: 17            
+            center: [-1.2666543598498297, 52.57484078987165],
+            zoom: 7
+        });
+    
+        // Add zoom and rotation controls to the map.
+        map.addControl(new mapboxgl.NavigationControl());
+    
+        // Function to calculate the bounding box of GeoJSON features
+        function calculateBoundingBox(features) {
+            var bounds = new mapboxgl.LngLatBounds();
+            features.forEach(function(feature) {
+                if (feature.geometry.type === 'Point') {
+                    bounds.extend(feature.geometry.coordinates);
+                } else if (feature.geometry.type === 'LineString') {
+                    feature.geometry.coordinates.forEach(function(coord) {
+                        bounds.extend(coord);
+                    });
+                } else if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates[0].forEach(function(coord) {
+                        bounds.extend(coord);
+                    });
+                }
+            });
+            return bounds;
+        }
+
+        // Function to update properties of the clicked polygon
+        function updateProperties(clickedFeatureIndex) {
+            var blockName = document.getElementById('blockNameInput').value;
+            var shortCode = document.getElementById('shortCodeInput').value;
+            var variety = document.getElementById('varietyInput').value;
+            var vineSpacing = document.getElementById('vineSpacingInput').value;
+            var underVineWidth = document.getElementById('underVineWidthInput').value;
+            var anchorPostDistance = document.getElementById('anchorPostDistanceInput').value;
+
+            var source = map.getSource('geojson-data');
+
+            if (!source) {
+                console.error("Source 'geojson-data' not found.");
+                return;
+            }
+
+            var features = source._data.features; // Get all features
+
+            // Check if the clicked feature index is valid
+            if (clickedFeatureIndex < 0 || clickedFeatureIndex >= features.length) {
+                console.error("Clicked feature index is out of bounds.");
+                return;
+            }
+
+            // Access the clicked polygon feature
+            var clickedPolygonFeature = features[clickedFeatureIndex];
+
+            // Update the clicked polygon properties
+            clickedPolygonFeature.properties = {
+                type: "block",
+                blockName: blockName,
+                shortCode: shortCode,
+                variety: variety,
+                vineSpacing: vineSpacing,
+                underVineWidth: underVineWidth,
+                anchorPostDistance: anchorPostDistance
+            };
+
+            // Filter line features associated with the clicked polygon
+            var associatedLineFeatures = map.querySourceFeatures('geojson-data', {
+                sourceLayer: 'geojson-data-lines-layer',
+                filter: ['within', clickedPolygonFeature.geometry]
+            });
+
+            console.log("associatedLineFeatures", associatedLineFeatures)
+
+            // Update properties of associated line features
+            associatedLineFeatures.forEach(lineFeature => {
+                features[lineFeature.id].properties = {
+
+                    // Preserve existing properties (e.g., Row, vine_row_id)
+                    Row: lineFeature.properties.Row,
+                    vine_row_id: lineFeature.properties.vine_row_id,
+
+                    VineSpacing: vineSpacing,
+                    UnderVineWidth: underVineWidth,
+                    AnchorPostDistance: anchorPostDistance,
+                    BlockID: shortCode
+                };
+                source.setData({ type: 'FeatureCollection', features: features });
+            });
+
+            // Set the updated GeoJSON data back to the source
+            //source.setData({ type: 'FeatureCollection', features: features });
+        }
+    
+        // Add GeoJSON data as a data source
+        map.on('load', function () {
+            map.addSource('geojson-data', {
+                type: 'geojson',
+                //promoteId: 'unique_id',
+                generateId: true,
+                data: geojson_feature_collection
+            });
+    
+            // // Add GeoJSON data as a layer
+            // map.addLayer({
+            //     'id': 'geojson-data-layer',
+            //     'type': 'line',
+            //     'source': 'geojson-data',
+            //     'layout': {
+            //         'line-join': 'round',
+            //         'line-cap': 'round'
+            //     },
+            //     'paint': {
+            //         'line-color': '#7af58f',
+            //         'line-width': 2
+            //     }
+            // });
+
+            // Add layers for different GeoJSON types
+            map.addLayer({
+                'id': 'geojson-data-polygons-layer',
+                'type': 'fill',
+                'source': 'geojson-data',
+                'layout': {},
+                'paint': {
+                    'fill-color': '#0080ff',
+                    'fill-opacity': 0.5
+                },
+                'filter': ['==', '$type', 'Polygon'] // Filter polygons
+            });
+
+            // map.addLayer({
+            //     'id': 'geojson-data-mid-row-line-layer',
+            //     'type': 'line',
+            //     'source': 'geojson-data',
+            //     'layout': {},
+            //     'paint': {
+            //         'line-color': '#7ab4f5',
+            //         'line-width': 2
+            //     },
+            //     'filter': ['all', 
+            //         ['==', '$type', 'LineString'], // Filter lines                
+            //         ['has', 'mid_row_line_id']
+            //     ]
+            // });
+
+            map.addLayer({
+                'id': 'geojson-data-lines-layer',
+                'type': 'line',
+                'source': 'geojson-data',
+                'layout': {},
+                'paint': {
+                    'line-color': '#7af58f',
+                    'line-width': 2
+                },
+                'filter': ['all', 
+                    ['==', '$type', 'LineString']//, // Filter lines                
+                    //['has', 'vine_row_id']
+                ]
+            });
+
+            map.addLayer({
+                'id': 'geojson-data-points-layer',
+                'type': 'circle',
+                'source': 'geojson-data',
+                'layout': {},
+                'paint': {
+                    'circle-color': '#b68ae5', //'#ff0000',
+                    'circle-radius': 5
+                },
+                'filter': ['==', '$type', 'Point'] // Filter points
+            });
+
+            // Initialy set the data to hidden
+            map.setLayoutProperty('geojson-data-polygons-layer', 'visibility', 'none');
+            map.setLayoutProperty('geojson-data-lines-layer', 'visibility', 'none');
+            map.setLayoutProperty('geojson-data-mid-row-line-layer', 'visibility', 'none');
+            map.setLayoutProperty('geojson-data-points-layer', 'visibility', 'none');
+
+            // // Mid row lines popup script
+            // map.on('click', 'geojson-data-mid-row-line-layer', function (e) {
+            //     var properties = e.features[0].properties;
+
+            //     new mapboxgl.Popup()
+            //         .setLngLat(e.lngLat)
+            //         .setHTML(
+            //             'Mid Row Line' + '<br / >' + 
+            //             'ID: ' + properties.mid_row_line_id
+            //         )
+            //         .addTo(map);
+            // });
+
+            // // Change the cursor to a pointer when the mouse is over the points
+            // map.on('mouseenter', 'geojson-data-mid-row-line-layer', function () {
+            //     map.getCanvas().style.cursor = 'pointer';
+            // });
+
+            // // Change it back to a pointer when it leaves.
+            // map.on('mouseleave', 'geojson-data-mid-row-line-layer', function () {
+            //     map.getCanvas().style.cursor = '';
+            // });
+            // // Mid row lines popup script
+
+            // Points popup script
+            // Add click event listener
+            map.on('click', 'geojson-data-points-layer', function (e) {
+                var name = e.features[0].properties.Name;
+                var type = e.features[0].properties.Type;
+                var variety = e.features[0].properties.Variety;
+                var vine_row_id = e.features[0].properties.VineRowID;
+    
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Name: ' + name + '<br />' + 
+                        'Type: ' + type + '<br />' + 
+                        'Variety: ' + variety + '<br />' + 
+                        'Vine Row ID: ' + vine_row_id + '<br />'
+                    )
+                    .addTo(map);
+            });    
+            
+            // Change the cursor to a pointer when the mouse is over the line layer
+            map.on('mouseenter', 'geojson-data-points-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+    
+            // Change it back to the default cursor when it leaves
+            map.on('mouseleave', 'geojson-data-points-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Points popup script
+    
+            // Lines popup script
+            // Add click event listener
+            map.on('click', 'geojson-data-lines-layer', function (e) {
+                var rowNumber = e.features[0].properties.Row;
+                var block_id = e.features[0].properties.BlockID;
+                var under_vine_width = e.features[0].properties.UnderVineWidth;
+                var vine_spacing = e.features[0].properties.VineSpacing;
+                var anchor_post_distance = e.features[0].properties.AnchorPostDistance;
+    
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(
+                        'Row Number: ' + rowNumber + '<br />' + 
+                        'Block ID: ' + block_id + '<br />' + 
+                        'Under Vine Width: ' + under_vine_width + '<br />' + 
+                        'Vine Spacing: ' + vine_spacing + '<br />' + 
+                        'Anchor Post Distance: ' + anchor_post_distance + '<br />'
+                    )
+                    .addTo(map);
+            });    
+            
+            // Change the cursor to a pointer when the mouse is over the line layer
+            map.on('mouseenter', 'geojson-data-lines-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+    
+            // Change it back to the default cursor when it leaves
+            map.on('mouseleave', 'geojson-data-lines-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Lines popup script
+
+            // Polygons popup script
+            // Add click event listener
+            map.on('click', 'geojson-data-polygons-layer', function (e) {
+                var blockName = e.features[0].properties.blockName || ''; // Set default value to empty string if not defined
+                var shortCode = e.features[0].properties.shortCode || '';
+                var variety = e.features[0].properties.variety || '';
+                var vineSpacing = e.features[0].properties.vineSpacing || '';
+                var underVineWidth = e.features[0].properties.underVineWidth || '';
+                var anchorPostDistance = e.features[0].properties.anchorPostDistance || '';
+
+                var features = map.queryRenderedFeatures(e.point, { layers: ['geojson-data-polygons-layer'] });
+                var clickedFeatureId = features[0].id;
+                //console.log("clickedFeatureId click function:", clickedFeatureId);
+
+                // Create a popup with input fields for block name and short code
+                var popupContent = document.createElement('div');
+                popupContent.innerHTML = `
+                    Enter Block ${blockName} Details:
+                    <br />
+                    Name:
+                    <br />
+                    <input type="text" id="blockNameInput" placeholder="Enter Block Name" value="${blockName}">
+                    <br />
+                    Short Code:
+                    <br />
+                    <input type="text" id="shortCodeInput" placeholder="Enter Short Code" value="${shortCode}">
+                    <br />
+                    Variety:
+                    <br />
+                    <input type="text" id="varietyInput" placeholder="Enter Variety" value="${variety}">
+                    <br />
+                    Vine Spacing (m):
+                    <br />
+                    <input type="text" id="vineSpacingInput" placeholder="Enter Vine Spacing" value="${vineSpacing}">
+                    <br />
+                    Under Vine Width (m):
+                    <br />
+                    <input type="text" id="underVineWidthInput" placeholder="Under Vine Width" value="${underVineWidth}">
+                    <br />
+                    Anchor Post Distance (m):
+                    <br />
+                    <input type="text" id="anchorPostDistanceInput" placeholder="Anchor Post Distance" value="${anchorPostDistance}">
+                    <br />
+
+                    <input type="button" value="Save" onclick="updateProperties('${clickedFeatureId}')">
+                `;
+
+                new mapboxgl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setDOMContent(popupContent)
+                    .addTo(map);
+            });
+            
+            // Change the cursor to a pointer when the mouse is over the polygon layer
+            map.on('mouseenter', 'geojson-data-polygons-layer', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+    
+            // Change it back to the default cursor when it leaves
+            map.on('mouseleave', 'geojson-data-polygons-layer', function () {
+                map.getCanvas().style.cursor = '';
+            });
+            // Polygons popup script            
+    
+            // Calculate the bounding box of the GeoJSON features
+            var bounds = calculateBoundingBox(geojson_feature_collection.features);
+    
+            // Set the map's center and zoom level based on the bounding box
+            map.fitBounds(bounds, { padding: 20 }); // Adjust padding as needed
+    
+            // Initialize Mapbox Draw
+            var draw = new MapboxDraw({
+                displayControlsDefault: false,
+                controls: {
+                    polygon: true,
+                    trash: true,
+                    point: true,
+                    line_string: true,
+                    combine_features: true,
+                    uncombine_features: true,
+                    direct_select: true
+                }
+            });
+    
+            // Add Draw control to the map
+            map.addControl(draw);
+            draw.add(geojson_feature_collection);
+    
+            // History for undo button
+            var historyStack = [];
+
+            // Push the initial state onto the history stack
+            historyStack.push(draw.getAll());
+
+            map.on('draw.create', function (e) {
+                var geojson = draw.getAll();
+                historyStack.push(geojson);
+                updateGeoJSON();
+            });
+
+            map.on('draw.update', function (e) {
+                var geojson = draw.getAll();
+                historyStack.push(geojson);
+                updateGeoJSON();
+            });
+
+            map.on('draw.delete', function (e) {
+                var geojson = draw.getAll();
+                historyStack.push(geojson);
+                updateGeoJSON();
+            });
+
+            function updateGeoJSON() {
+                var geojson = draw.getAll();
+                geojson_feature_collection = geojson;
+                map.getSource('geojson-data').setData(geojson_feature_collection);
+            }
+
+            function undo() {
+                if (isEditing) {
+                    if (historyStack.length > 1) {
+                        historyStack.pop(); // Remove the current state
+                        var previousState = historyStack[historyStack.length - 1]; // Get the previous state
+                        draw.deleteAll(); // Remove all existing features
+                        draw.add(previousState); // Add features from the previous state
+                        updateGeoJSON();
+                    }
+                }
+            }
+
+            document.getElementById('undoButton').addEventListener('click', undo);
+
+            function toggleEditing() {
+                if (isEditing) {
+                    // Disable editing
+                    map.removeControl(draw);
+                    map.setLayoutProperty('geojson-data-polygons-layer', 'visibility', 'visible');
+                    map.setLayoutProperty('geojson-data-lines-layer', 'visibility', 'visible');
+                    //map.setLayoutProperty('geojson-data-mid-row-line-layer', 'visibility', 'visible');
+                    map.setLayoutProperty('geojson-data-points-layer', 'visibility', 'visible');
+                    document.getElementById('undoButton').disabled = true;                 
+                    //document.getElementById('saveButton').disabled = false;
+                    document.getElementById("toggleEditButton").innerText = "Edit Geometries";
+                    isEditing = false;
+                } else {
+                    // Enable editing
+                    map.addControl(draw);
+                    draw.add(geojson_feature_collection);
+                    map.setLayoutProperty('geojson-data-polygons-layer', 'visibility', 'none');
+                    map.setLayoutProperty('geojson-data-lines-layer', 'visibility', 'none');
+                    //map.setLayoutProperty('geojson-data-mid-row-line-layer', 'visibility', 'none');
+                    map.setLayoutProperty('geojson-data-points-layer', 'visibility', 'none');
+                    document.getElementById('undoButton').disabled = false;
+                    //document.getElementById('saveButton').disabled = true;
+                    document.getElementById("toggleEditButton").innerText = "Edit Properties";
+                    isEditing = true;
+                }
+            }
+
+            document.getElementById('toggleEditButton').addEventListener('click', toggleEditing);
+
+            // Function to download GeoJSON  
+            function downloadGeoJSON() {
+                // Filter out only LineString features
+                var lineStringFeatures = geojson_feature_collection.features.filter(function(feature) {
+                    return feature.geometry.type === 'LineString';
+                });
+
+                // Create a GeoJSON Feature Collection object with only LineString features
+                var lineStringFeatureCollection = {
+                    type: 'FeatureCollection',
+                    features: lineStringFeatures
+                };
+
+                // Convert the GeoJSON object to a string
+                //var geojsonString = JSON.stringify(lineStringFeatureCollection);
+                var geojsonString = JSON.stringify(geojson_feature_collection);
+
+                // Create a Blob from the GeoJSON string
+                var blob = new Blob([geojsonString], { type: 'application/json' });
+
+                // Create a URL for the Blob
+                var url = URL.createObjectURL(blob);
+
+                // Create an anchor element to trigger the download
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'edited_geojson_data.geojson';
+
+                // Append the anchor element to the document body and trigger a click event
+                document.body.appendChild(a);
+                a.click();
+
+                // Remove the anchor element from the document body
+                document.body.removeChild(a);
+            }
+
+            document.getElementById('downloadButton').addEventListener('click', downloadGeoJSON);
+
+            // Function to toggle visibility of vine rows
+            function toggleVineRowVisibility() {
+                var isChecked = document.getElementById('showVineRows').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+                
+                map.setLayoutProperty('geojson-data-lines-layer', 'visibility', visibility);
+            }
+
+            // Function to toggle visibility of mid row lines
+            function toggleMidRowLinesVisibility() {
+                var isChecked = document.getElementById('showMidRowLines').checked;
+                var visibility = isChecked ? 'visible' : 'none';
+
+                map.setLayoutProperty('geojson-data-mid-row-line-layer', 'visibility', visibility);
+            }
+                        
+            document.getElementById('showVineRows').addEventListener('change', toggleVineRowVisibility);
+            document.getElementById('showMidRowLines').addEventListener('change', toggleMidRowLinesVisibility);
+
+            // Initially toggle visibility based on checkbox state
+            toggleVineRowVisibility();
+            toggleMidRowLinesVisibility();
+
+
+
+
+
+
+
+
+
+
+
+
+            // Export geojson data to xml
+            document.getElementById('button_export_to_antobot_xml').addEventListener('click', function() {
+                // Call the function to generate XML content
+                const xmlContent = coordinatesToXml(geojson_feature_collection, 1.0); // input geojson data and row width in meters
+                
+                // Convert XML string to Blob
+                const blob = new Blob([xmlContent], { type: 'application/xml' });
+
+                // Create a temporary anchor element
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'antobot.xml';
+
+                // Append the anchor element to the document body
+                document.body.appendChild(a);
+
+                // Simulate click on the anchor element
+                a.click();
+
+                // Clean up: remove the anchor element and revoke the object URL
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            });
+
+            function coordinatesToXml(geojson_feature_collection, rowWidth) {
+                const xmlDoc = document.implementation.createDocument(null, 'antonav');
+                const antonav = xmlDoc.documentElement;
+
+                let nodes = [];
+                let ways = [];
+                let nodeId = 1;
+                let wayId = 1;
+
+                // First pass: Create nodes and store their references
+                geojson_feature_collection.features.forEach(feature => {
+                    if (feature.geometry.type === 'LineString' && feature.properties.mid_row_line_id) {
+                        let nodeIds = [];
+                        feature.geometry.coordinates.forEach(coord => {
+                            let node = xmlDoc.createElement('node');
+                            node.setAttribute('id', nodeId.toString());
+                            node.setAttribute('lat', coord[1].toString());
+                            node.setAttribute('lon', coord[0].toString());
+                            nodes.push(node);
+                            nodeIds.push(nodeId.toString());
+                            nodeId++;
+                        });
+                        ways.push({ wayId: wayId, nodeIds: nodeIds, midRowLineId: feature.properties.mid_row_line_id });
+                        wayId++;
+                    }
+                });
+
+                // Add nodes to the root element
+                nodes.forEach(node => {
+                    antonav.appendChild(node);
+                });
+
+                // Second pass: Create way elements using stored node references
+                ways.forEach(way => {
+                    let wayElement = xmlDoc.createElement('way');
+                    wayElement.setAttribute('id', way.wayId.toString());
+
+                    let tags = [
+                        { k: 'navMethod', v: 'corridorFruit' },
+                        { k: 'rowType', v: 'middle' },
+                        { k: 'rowNumber', v: way.midRowLineId },
+                        { k: 'rowWidth', v: rowWidth.toString() }
+                    ];
+
+                    tags.forEach(tag => {
+                        let tagElement = xmlDoc.createElement('tag');
+                        tagElement.setAttribute('k', tag.k);
+                        tagElement.setAttribute('v', tag.v);
+                        wayElement.appendChild(tagElement);
+                    });
+
+                    way.nodeIds.forEach(nid => {
+                        let nd = xmlDoc.createElement('nd');
+                        nd.setAttribute('ref', nid);
+                        wayElement.appendChild(nd);
+                    });
+
+                    antonav.appendChild(wayElement);
+                });
+
+                // Serialize the XML document to string
+                const serializer = new XMLSerializer();
+                const xmlString = serializer.serializeToString(xmlDoc);
+
+                // Return the final XML string
+                return xmlString;
+            }
+
+
+
+            // Save vineyard ID and GeoJSON data to Orion
+            function saveData() {
+                // Get the vineyard ID from the input field
+                var vineyardId = document.getElementById('vineyard_id').value;
+                var vineyardName = document.getElementById('vineyard_name').value;
+                var streetAddress = document.getElementById('street_address').value;
+                var owner = document.getElementById('owner').value;
+                console.log("Saved button pressed")
+
+                // Get the GeoJSON data as a string
+                var geojsonString = JSON.stringify(geojson_feature_collection);
+
+                // Prepare the data to send to Flask in JSON format
+                var data = {
+                    vineyard_id: vineyardId,
+                    vineyard_name: vineyardName,
+                    street_address: streetAddress,
+                    owner: owner,
+                    geojson_data: geojsonString
+                };
+
+                // Send a POST request to the Flask endpoint using Fetch API
+                fetch('/import_csv', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                    console.error('Error saving data:', response.statusText);
+                    return;
+                    }
+                    // Handle successful response (e.g., display a confirmation message)
+                    console.log('Vineyard ID and GeoJSON data saved successfully!');
+                })
+                .catch(error => {
+                    console.error('Error saving data:', error);
+                });
+            }
+
+            // Add click event listener to the save button
+            document.getElementById('saveButton').addEventListener('click', saveData);
+        
+        });
+
+        // Only enable the save button if the vineyard_id and other boxes has some text
+        function checkInputs() {
+            var vineyardId = document.getElementById('vineyard_id').value;
+            var vineyardName = document.getElementById('vineyard_name').value;
+            var streetAddress = document.getElementById('street_address').value;
+            var owner = document.getElementById('owner').value;
+            var saveButton = document.getElementById('saveButton');
+
+            if (vineyardId && vineyardName && streetAddress && owner) {
+                saveButton.disabled = false;
+            } else {
+                saveButton.disabled = true;
+            }
+        }
+
+        document.getElementById('vineyard_id').addEventListener('input', checkInputs);
+        document.getElementById('vineyard_name').addEventListener('input', checkInputs);
+        document.getElementById('street_address').addEventListener('input', checkInputs);
+        document.getElementById('owner').addEventListener('input', checkInputs)
+    </script>
+
+</body>
+</html>

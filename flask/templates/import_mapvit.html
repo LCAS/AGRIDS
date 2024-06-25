@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <title>VISTA Map - Import MapVit GeoJSON File</title>
+</head>
+<body>
+    <div class="container">
+        <div class="info">
+            <h1>VISTA Map - Import MapVit GeoJSON File</h1>
+            <!--<a href="/">Main</a>
+            <a href="vine">Vine</a>
+            <a href="vine_all">All Vines</a>
+            <a href="vine_add">Add Vines</a>
+            <a href="vinerow">Vine Row</a>
+            <a href="vinerow_all">All Vine Rows</a>
+            <a href="vinerow_add">Add Vine Rows</a>
+            <a href="block">Block</a>
+            <a href="block_all">All Blocks</a>
+            <a href="block_add">Add Blocks</a>-->
+            <a href="vineyard_geojson_orion">View Vineyard</a>
+            <a href="create_map">Create Map</a>
+            <a href="import_csv">Import CSV with Labelled End Posts</a>
+            <a href="import_csv_click_points">Import CSV with End Posts</a>
+            <!--<a href="import_csv_click_points_bearing">Import CSV with End Posts Generate Rows</a>-->
+            <a href="import_csv_click_points_bearing_select_points">Import CSV with End Posts Generate Rows with Polygons</a>
+            <a href="import_mapvit">Import MapVit GeoJSON</a>
+        </div>      
+
+        <h2>Import MapVit GeoJSON File</h2>
+
+        <fieldset>
+            <form action="/import_mapvit" method="post" enctype="multipart/form-data">
+                <label for="vineyard_id">Vineyard ID:</label>
+                <input type="text" id="vineyard_id" name="vineyard_id" required>
+                
+                <br />
+                
+                <label for="vine_spacing">Vine Spacing:</label>
+                <input type="text" id="vine_spacing" name="vine_spacing" required>
+                
+                <br />
+                
+                <label for="under_vine_width">Under Vine Width:</label>
+                <input type="text" id="under_vine_width" name="under_vine_width" required>
+                
+                <br />
+                
+                <label for="anchor_post_distance">Anchor Post Distance:</label>
+                <input type="text" id="anchor_post_distance" name="anchor_post_distance" required>
+                
+                <br />
+                
+                <input type="file" name="file" accept=".geojson" required>                
+                <input type="submit" name="upload_geojson" value="Upload">
+            </form>
+        </fieldset>
+
+        <h2>{{ message }}</h2>
+    </div>
+
+</body>
+</html>

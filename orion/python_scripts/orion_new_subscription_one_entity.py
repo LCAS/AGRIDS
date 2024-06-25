@@ -1,17 +1,14 @@
 import requests
 import json
 
-orion_url = 'http://localhost:1026/v2/entities'
-subscription_url = 'http://localhost:1026/v2/subscriptions'
-notification_endpoint = 'http://cygnus:5051/notify' # cygnus
+subscription_url = "http://localhost:1026/v2/subscriptions"
+notification_endpoint = "http://cygnus:5051/notify" # cygnus
 
 headers = {
-    'Content-Type': 'application/json'
+    "Content-Type": "application/json",
+    "fiware-servicepath": "/",
+    "fiware-service": "openiot"
 }
-
-# Fetching the list of entities from Orion
-response = requests.get(orion_url)
-entities = response.json()
 
 def create_subscription(entity_id, entity_type, attribute, endpoint):
     subscription_payload = {
@@ -20,13 +17,12 @@ def create_subscription(entity_id, entity_type, attribute, endpoint):
             "entities": [
                 {
                     "id": entity_id,
-                    "type": entity_type,
-                    "fiware-service": "openiot"
+                    "type": entity_type
                 }
             ],
             "condition": {
                 "attrs": [attribute],
-                "notifyOnMetadataChange": True,  # Set to False to exclude metadata changes
+                "notifyOnMetadataChange": True  # Set to False to exclude metadata changes
             }
         },
         "notification": {
@@ -47,10 +43,9 @@ def create_subscription(entity_id, entity_type, attribute, endpoint):
         print(f"Failed to create subscription for {entity_id} - {attribute}. Status code: {response.status_code}")
         print(response.text)
 
-for entity in entities:
-    for attribute, attribute_value in entity.items():
-        # Skip non-dictionary attributes (like "id" and "type")
-        if not isinstance(attribute_value, dict):
-            continue
-        
-        create_subscription(entity["id"], entity["type"], attribute, notification_endpoint)
+# Example useage
+entity_id = "vine003"
+entity_type ="Vine"
+attribute = "grapes_number"
+
+create_subscription(entity_id, entity_type, attribute, notification_endpoint)

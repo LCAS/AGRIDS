@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <title>VISTA Map - Delete Entity</title>
+</head>
+<body>
+    <div class="container">
+        <div class="info">
+            <h1>VISTA Map - Delete Entity</h1>
+            <!--<a href="/">Main</a>
+            <a href="vine">Vine</a>
+            <a href="vine_all">All Vines</a>
+            <a href="vine_add">Add Vines</a>
+            <a href="vinerow">Vine Row</a>
+            <a href="vinerow_all">All Vine Rows</a>
+            <a href="vinerow_add">Add Vine Rows</a>
+            <a href="block">Block</a>
+            <a href="block_all">All Blocks</a>
+            <a href="block_add">Add Blocks</a>-->
+            <a href="vineyard_geojson_orion">View Vineyard</a>
+            <a href="create_map">Create Map</a>
+            <a href="import_csv">Import CSV with Labelled End Posts</a>
+            <a href="import_csv_click_points">Import CSV with End Posts</a>
+            <!--<a href="import_csv_click_points_bearing">Import CSV with End Posts Generate Rows</a>-->
+            <a href="import_csv_click_points_bearing_select_points">Import CSV with End Posts Generate Rows with Polygons</a>
+        </div>
+
+        <fieldset>
+
+            <form method="post">            
+                <label for="entitySelect">Select Entity:</label>
+
+                <select id="entitySelect" name="entity_id">
+                    {% for item in all_entity_list %}
+                            <option value="{{ item['id'] }}">{{ item['vineyard_id'] }} - {{ item['type'] }} - {{ item['name'] }} - {{ item['user_defined_id'] }} - {{ item['id'] }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" name="button_delete">Delete</button>
+            </form>
+
+        </fieldset>
+    </div>
+
+</body>
+</html>
