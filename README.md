@@ -1,4 +1,5 @@
 # AGRIDS
+Agricultural Robotics Integrated Data Storage.
 
 ## Setup
 Setup Fiware Orion and the Flask web app follow the instruction on the README files, [Orion README](orion) and [Flask App README](flask)
