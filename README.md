@@ -4,6 +4,10 @@ Agricultural Robotics Integrated Data Storage.
 ## Setup
 Setup Fiware Orion and the Flask web app follow the instruction on the README files, [Orion README](orion) and [Flask App README](flask)
 
+## Component Overview
+
+![flowchart](https://github.com/LCAS/AGRIDS/assets/6209386/35a2fee6-12c0-4017-b69d-ba13e399ace6)
+
 ## Demo Usage Video
 [AGRIDS Demo Video](https://www.youtube.com/watch?v=nfP7m3ZADLo)
 
