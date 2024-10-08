@@ -1,4 +1,4 @@
-# AGRIDS
+![image](https://github.com/user-attachments/assets/9f885abd-47cd-436e-b395-9207fe6d960b)# AGRIDS
 Agricultural Robotics Integrated Data Storage.
 
 ## Setup
@@ -95,18 +95,21 @@ Navigation and topological maps can be exported as specific robotic formats and 
 
 ## Fiware Orion Entities
 | Vineyard               | Block                       | Vine Row                    | Vine                     | Polygon                 | Line                      | Point                    | Photo                   |
-| ---------------------- | --------------------------- | --------------------------- | ------------------------ | ----------------------- | ------------------------- | ------------------------ | ----------------------- |
+|------------------------|-----------------------------|-----------------------------|--------------------------|-------------------------|---------------------------|--------------------------|-------------------------|
 | vineyard_id: String    | block_id: String            | vine_row_id: String         | vine_id: String          | polygon_id: String      | line_id: String           | point_id: String         | photo_id: String        |
 | name: String           | user_defined_id: String     | user_defined_id: String     | user_defined_id: String  | user_defined_id: String | user_defined_id: String   | user_defined_id: String  | user_defined_id: String |
 | owner: String          | vineyard_id: String         | vineyard_id: String         | vineyard_id: String      | vineyard_id: String     | vineyard_id: String       | vineyard_id: String      | vineyard_id: String     |
 | street_address: String | name: string                | block_id: String            | vine_row_id: String      | name: String            | name: String              | name: String             | vine_id: String         |
-| geom: geo:json Polygon | date_start: DateTime        | under_vine_width: Float     | grapes_number: Float     | category: String        | category: String          | category: String         | storage_url: String     |
-|                        | date_end: DateTime          | vine_spacing: Float         | grapes_yield: Float      | class: String           | class: String             | class: String            |                         |
+| geom: geo:json Polygon | date_start: DateTime        | under_vine_width: Float     | grapes_number: Float     | category: String        | category: String          | category: String         | timestamp: DateTime     |
+|                        | date_end: DateTime          | vine_spacing: Float         | grapes_yield: Float      | class: String           | class: String             | class: String            | storage_url: String     |
 |                        | row_spacing_m: Float        | anchor_post_distance: Float | rootstock: String        | geom: geo:json Polygon  | geom: geo:json LineString | location: geo:json Point |                         |
-|                        | under_vine_width: Float     | geom: geo:json LineString   | variety: String          |                         |                           |                          |                         |
-|                        | anchor_post_distance: Float |                             | location: geo:json Point |                         |                           |                          |                         |
-|                        | vine_spacing: Float         |                             |                          |                         |                           |                          |                         |
-|                        | variety: String             |                             |                          |                         |                           |                          |                         |
+|                        | under_vine_width: Float     | post_spacing: Float         | variety: String          |                         |                           |                          |                         |
+|                        | anchor_post_distance: Float | pruning_style: String       | clone: String            |                         |                           |                          |                         |
+|                        | vine_spacing: Float         | clone: String               | location: geo:json Point |                         |                           |                          |                         |
+|                        | clone: String               | variety: String             |                          |                         |                           |                          |                         |
+|                        | variety: String             | rootstock: String           |                          |                         |                           |                          |                         |
+|                        | rootstock: String           | trellis_type: String        |                          |                         |                           |                          |                         |
+|                        | trellis_type: String        | geom: geo:json LineString   |                          |                         |                           |                          |                         |
 |                        | geom: geo:json Polygon      |                             |                          |                         |                           |                          |                         |
 
 Polygon, line and point are for other farm infrastructure such as buildings, drainage ditches and storage takes.
