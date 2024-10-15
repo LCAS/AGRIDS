@@ -113,3 +113,6 @@ Navigation and topological maps can be exported as specific robotic formats and 
 |                        | geom: geo:json Polygon      |                             |                          |                         |                           |                          |                         |
 
 Polygon, line and point are for other farm infrastructure such as buildings, drainage ditches and storage takes.
+
+## AGRIDS Fiware API
+[AGRIDS Fiware API](documents/agrids-fiwire-ngsiv2-openapi.json)
