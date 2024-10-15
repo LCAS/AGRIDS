@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/9f885abd-47cd-436e-b395-9207fe6d960b)# AGRIDS
+# AGRIDS
 Agricultural Robotics Integrated Data Storage.
 
 ## Setup
