@@ -1,11 +1,5 @@
 # VISTA API, Entities and Attributes
 
-The current VISTA server is password protected.
-
-Username - `lcas`
-
-Password - `lincoln`
-
 ## Fiware Orion API
 VISTA uses Fireware Orion for data storage.
 
