@@ -115,4 +115,4 @@ Navigation and topological maps can be exported as specific robotic formats and 
 Polygon, line and point are for other farm infrastructure such as buildings, drainage ditches and storage takes.
 
 ## AGRIDS Fiware API
-[AGRIDS Fiware API](documents/agrids-fiwire-ngsiv2-openapi.json)
+[AGRIDS Fiware API](https://github.com/LCAS/AGRIDS/blob/main/VISTA_API.md)
