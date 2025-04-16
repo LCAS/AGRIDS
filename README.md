@@ -8,8 +8,9 @@ Setup Fiware Orion and the Flask web app follow the instruction on the README fi
 
 ![flowchart](https://github.com/LCAS/AGRIDS/assets/6209386/35a2fee6-12c0-4017-b69d-ba13e399ace6)
 
-## Demo Usage Video
+## Videos
 [AGRIDS Demo Video](https://www.youtube.com/watch?v=8N8bEK5EBhI)
+[AGRIDS Presentation](https://www.youtube.com/watch?v=CEKvy9WFA8E)
 
 ## Flask Web App
 The web app is the interface to import, store, visualise and export data to and from AGRIDS.
