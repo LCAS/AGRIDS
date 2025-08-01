@@ -2,7 +2,17 @@
 Agricultural Robotics Integrated Data Storage.
 
 ## Setup
-Setup Fiware Orion and the Flask web app follow the instruction on the README files, [Orion README](orion) and [Flask App README](flask)
+
+AGRIDS runs in a Docker container.
+1. Install [Docker](https://docs.docker.com/engine/install/) or [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
+2. Create / naviagte to the folder you want AGRIDS to be saved to in terminal.
+3. Glone the AGRIDs repositry `git clone https://github.com/LCAS/AGRIDS.git -b release/v1.0.0`
+4. In terminal navigate to `AGRIDS/docker` folder.
+5. In terminal run `docker compose up`. This will download the docker containers and start SGRIDS running
+6. IN a webrowser go to `http://localhost:5000`
+
+## AGRIDS Fiware API
+[AGRIDS Fiware API](https://github.com/LCAS/AGRIDS/blob/main/VISTA_API.md)
 
 ## Component Overview
 
@@ -115,6 +125,3 @@ Navigation and topological maps can be exported as specific robotic formats and 
 |                        | geom: geo:json Polygon      |                             |                          |                         |                           |                          |                         |
 
 Polygon, line and point are for other farm infrastructure such as buildings, drainage ditches and storage takes.
-
-## AGRIDS Fiware API
-[AGRIDS Fiware API](https://github.com/LCAS/AGRIDS/blob/main/VISTA_API.md)

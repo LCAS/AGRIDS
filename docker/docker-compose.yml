@@ -1,10 +1,31 @@
-# https://fiware-tutorials.readthedocs.io/en/latest/short-term-history.html
-
-version: "3.8"
 services:
+  watchtower:
+    image: containrrr/watchtower
+    command: --interval 600 --scope vista
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  vista:
+    image: lcas.lincoln.ac.uk/lcas/vista:latest
+    labels:
+      - "com.centurylinklabs.watchtower.scope=vista"
+
+    restart: unless-stopped
+    container_name: vista
+    depends_on:
+      - orion-v2
+    networks:
+      - default
+    env_file:
+      - .env
+    ports:
+      - "${VISTA_PORT}:5000" # localhost:5000
+
   # Orion is an NGSI-v2 context broker
   orion-v2:
     image: quay.io/fiware/orion:${ORION_VERSION}
+    restart: unless-stopped
     hostname: orion
     container_name: fiware-orion
     depends_on:
@@ -15,7 +36,9 @@ services:
       - "${ORION_PORT}"
     ports:
       - "${ORION_PORT}:${ORION_PORT}" # localhost:1026
-    command: -dbhost mongo-db -logLevel DEBUG
+    # see https://github.com/telefonicaid/fiware-orion/issues/3166
+    entrypoint: ["sh", "-c", "rm -f /tmp/contextBroker.pid; /usr/bin/contextBroker -fg -multiservice -ngsiv1Autocast -disableFileLog -dbhost mongo-db -logLevel DEBUG"]
+    #command: -dbhost mongo-db -logLevel DEBUG
     healthcheck:
       test: curl --fail -s http://orion:${ORION_PORT}/version || exit 1
       interval: 5s
@@ -23,6 +46,7 @@ services:
   # Cygnus is configured to persist to STH-Comet
   cygnus:
     image: quay.io/fiware/cygnus-ngsi:${CYGNUS_VERSION}
+    restart: unless-stopped
     hostname: cygnus
     container_name: fiware-cygnus
     depends_on:
@@ -47,6 +71,7 @@ services:
   # STH-Comet is persisting Short Term History to Mongo-DB
   sth-comet:
     image: quay.io/fiware/sth-comet:${STH_COMET_VERSION}
+    restart: unless-stopped
     hostname: sth-comet
     container_name: fiware-sth-comet
     depends_on:
@@ -68,6 +93,7 @@ services:
 # Database
   mongo-db:
     image: mongo:${MONGO_DB_VERSION}
+    restart: unless-stopped
     hostname: mongo-db
     container_name: db-mongo
     expose:
@@ -77,31 +103,16 @@ services:
     networks:
       - default
     volumes:
-      - ~/VISTA/orion/mongodb:/data/db
-    #  - mongo-db:/data
+      - vista-mongo-db:/data
     healthcheck:
-      test: ["CMD","mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD","mongo", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       timeout: 5s
       retries: 3
       start_period: 5s
-      
-  #mongo-express:
-  #  image: mongo-express
-  #  environment:
-  #    - ME_CONFIG_MONGODB_SERVER=mongo-db
-  #  ports:
-  #    - "8081:8081"
-  #  networks:
-  #    - default
 
 networks:
   default:
-    labels:
-      org.fiware: 'cabbage'
-    ipam:
-      config:
-        - subnet: 172.18.1.0/24
   
-#volumes:
-#  mongo-db: ~
+volumes:
+  vista-mongo-db:
