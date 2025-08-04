@@ -8,8 +8,8 @@ AGRIDS runs in a Docker container.
 2. Create / naviagte to the folder you want AGRIDS to be saved to in terminal.
 3. Glone the AGRIDs repositry `git clone https://github.com/LCAS/AGRIDS.git -b release/v1.0.0`
 4. In terminal navigate to `AGRIDS/docker` folder.
-5. In terminal run `docker compose up`. This will download the docker containers and start SGRIDS running
-6. IN a webrowser go to `http://localhost:5000`
+5. In terminal run `docker compose up`. This will download the docker containers and start AGRIDS running
+6. In a webrowser go to `http://localhost:5000`
 
 ## AGRIDS Fiware API
 [AGRIDS Fiware API](https://github.com/LCAS/AGRIDS/blob/main/VISTA_API.md)
