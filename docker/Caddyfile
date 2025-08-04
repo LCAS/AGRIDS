@@ -1,0 +1,5 @@
+# Caddyfile content
+# Choose any name make sure it's not a real public domain.
+localhost {
+    reverse_proxy vista:5000
+}

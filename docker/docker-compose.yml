@@ -19,8 +19,8 @@ services:
     env_file:
       - .env
     # Remove the port mapping here. Caddy will access it internally on port 5000.
-    # ports:
-    #   - "${VISTA_PORT}:5000" # localhost:5000
+    ports:
+      - "${VISTA_PORT}:5000" # localhost:5000
 
   # Add Caddy service
   caddy:
@@ -30,6 +30,7 @@ services:
     ports:
       - "80:80"   # HTTP for ACME challenges and redirection
       - "443:443" # HTTPS
+      - "2019:2019" # Caddy API
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile # Your Caddy configuration
       - caddy_data:/data                 # Persistent storage for Caddy (certificates, etc.)
