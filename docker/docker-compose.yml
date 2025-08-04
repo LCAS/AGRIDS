@@ -7,10 +7,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   vista:
-    image: lcas.lincoln.ac.uk/lcas/vista:latest
+    image: lcas.lincoln.ac.uk/lcas/vista:v1.0.0
     labels:
       - "com.centurylinklabs.watchtower.scope=vista"
-
     restart: unless-stopped
     container_name: vista
     depends_on:
@@ -19,8 +18,25 @@ services:
       - default
     env_file:
       - .env
+    # Remove the port mapping here. Caddy will access it internally on port 5000.
+    # ports:
+    #   - "${VISTA_PORT}:5000" # localhost:5000
+
+  # Add Caddy service
+  caddy:
+    image: caddy/caddy:latest
+    restart: unless-stopped
+    container_name: caddy
     ports:
-      - "${VISTA_PORT}:5000" # localhost:5000
+      - "80:80"   # HTTP for ACME challenges and redirection
+      - "443:443" # HTTPS
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Your Caddy configuration
+      - caddy_data:/data                 # Persistent storage for Caddy (certificates, etc.)
+    depends_on:
+      - vista # Caddy depends on vista being up
+    networks:
+      - default
 
   # Orion is an NGSI-v2 context broker
   orion-v2:
@@ -41,7 +57,6 @@ services:
     #command: -dbhost mongo-db -logLevel DEBUG
     healthcheck:
       test: curl --fail -s http://orion:${ORION_PORT}/version || exit 1
-      interval: 5s
 
   # Cygnus is configured to persist to STH-Comet
   cygnus:
@@ -113,6 +128,7 @@ services:
 
 networks:
   default:
-  
+
 volumes:
   vista-mongo-db:
+  caddy_data: # Define the volume for Caddy's data
