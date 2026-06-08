@@ -1,120 +1,100 @@
 # AGRIDS
+
 Agricultural Robotics Integrated Data Storage.
 
-## Setup
-Setup Fiware Orion and the Flask web app follow the instruction on the README files, [Orion README](orion) and [Flask App README](flask)
+AGRIDS is a vineyard data platform for agricultural robotics workflows. It provides a web application for creating, importing, visualising, editing, and exporting vineyard map data, backed by FIWARE Orion and optional robot-data storage through MinIO and Zenoh.
 
-## Component Overview
+![AGRIDS component flowchart](https://github.com/LCAS/AGRIDS/assets/6209386/35a2fee6-12c0-4017-b69d-ba13e399ace6)
 
-![flowchart](https://github.com/LCAS/AGRIDS/assets/6209386/35a2fee6-12c0-4017-b69d-ba13e399ace6)
+## Documentation
+
+The project wiki is the main user and deployment guide:
+
+| Need | Wiki page |
+| --- | --- |
+| Install and launch AGRIDS | [Setup Instructions](https://github.com/LCAS/AGRIDS/wiki/Setup-Instructions) |
+| Understand the stack | [Architecture and Components](https://github.com/LCAS/AGRIDS/wiki/Architecture-and-Components) |
+| Create or import vineyard maps | [Create and Import Map Data](https://github.com/LCAS/AGRIDS/wiki/Web-Application-%E2%80%90-Create-and-Import-Map-Data) |
+| Visualise and export data | [Visualise Data](https://github.com/LCAS/AGRIDS/wiki/Web-Application%E2%80%90-Visualise-Data) |
+| Query or integrate with Orion | [API](https://github.com/LCAS/AGRIDS/wiki/API) |
+| Understand entity types | [Entities and Attributes](https://github.com/LCAS/AGRIDS/wiki/Entities-and-Attributes) |
+| Operate or troubleshoot a deployment | [Operations and Troubleshooting](https://github.com/LCAS/AGRIDS/wiki/Operations-and-Troubleshooting) |
+| Work with robot images/data | [Robot Data, MinIO, and Zenoh](https://github.com/LCAS/AGRIDS/wiki/Robot-Data-MinIO-Zenoh) |
+| Use helper scripts | [Developer Scripts](https://github.com/LCAS/AGRIDS/wiki/Developer-Scripts) |
+
+This README is intentionally concise. Keep detailed workflows, screenshots, import formats, and operational guidance in the wiki so deployment documentation stays in one place.
+
+## What AGRIDS Provides
+
+- Browser-based vineyard map creation and editing.
+- CSV, GeoJSON, and MapVit import workflows.
+- Storage of vineyard, block, vine-row, vine, infrastructure, and photo entities in FIWARE Orion.
+- Map visualisation with selectable operational layers.
+- Exports for GeoJSON, Antobot XML, PDF reports, KML, and topological map YAML.
+- Optional MinIO and Zenoh integration for robot sensor data such as images.
+
+## Repository Layout
+
+| Path | Purpose |
+| --- | --- |
+| `flask/` | Flask web application, templates, static files, import/export helpers, and geometry utilities |
+| `orion/` | FIWARE service wrapper, Docker Compose configuration, Orion/MongoDB/STH helper scripts |
+| `zenoh/minio/` | Optional Zenoh + MinIO configs and robot-data scripts |
+| `documents/` | OpenAPI/NGSI-v2 API document |
+| `VISTA_API.md` | Legacy API reference retained for compatibility |
+
+## Quick Start
+
+For normal deployment, use the wiki setup guide:
+
+- [Setup Instructions](https://github.com/LCAS/AGRIDS/wiki/Setup-Instructions)
+
+Release/application packages are expected to be launched with Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+For source-checkout development, start the FIWARE services and Flask app separately:
+
+```bash
+cd orion/docker
+./services cygnus
+```
+
+```bash
+cd ../../flask
+export FIWARE_ORION_BASE_URL=http://localhost:1026/v2/entities/
+python flask_web_server.py
+```
+
+Then open:
+
+```text
+http://localhost:5000
+```
+
+## API and Data Model
+
+AGRIDS stores current vineyard state in FIWARE Orion through the NGSI-v2 entity API. Local deployments usually expose Orion at:
+
+```text
+http://localhost:1026/v2/entities
+```
+
+See:
+
+- [API](https://github.com/LCAS/AGRIDS/wiki/API)
+- [Entities and Attributes](https://github.com/LCAS/AGRIDS/wiki/Entities-and-Attributes)
+- [OpenAPI JSON](documents/agrids-fiwire-ngsiv2-openapi.json)
 
 ## Videos
-[AGRIDS Demo Video](https://www.youtube.com/watch?v=8N8bEK5EBhI)
 
-[AGRIDS Presentation](https://www.youtube.com/watch?v=CEKvy9WFA8E)
+- [AGRIDS Demo Video](https://www.youtube.com/watch?v=8N8bEK5EBhI)
+- [AGRIDS Presentation](https://www.youtube.com/watch?v=CEKvy9WFA8E)
 
-## Flask Web App
-The web app is the interface to import, store, visualise and export data to and from AGRIDS.
+## Notes for Contributors
 
-### Import Data
-Currently, data can be created and imported to AGRIDS in three ways.
-
-#### 1. Creating a vineyard map from scratch.
-Points, lines and polygons can be drawn on the map to represent, blocks, vine rows and also other infrastructure such as buildings and storage tanks, using the buttons on the top right of the map.
-
-Once the features have been drawn click on the edit properties button.
-Click on a shape, e.g. block polygon to enter the details of the block, such as name, variety etc.
-
-To switch back to editing the shapes and to add more polygons, lines and points click on the edit geometries button.
-
-To save enter a unique vineyard ID and click save to store in AGRIDS.
-
-![341361508-9fce845b-a42d-4e6e-a86e-ade7949637a4](https://github.com/LCAS/AGRIDS/assets/6209386/ce1c64f2-949d-422d-a6b5-df30579beb30)
-
-#### 2. Import vine rows with labelled end posts as a CSV file.
-To import a CSV file, the columns must be in the format; Latitude, Longitude, Row, where Row is a number corresponding the row numbering system used by the vineyard, there must only be two latitude and longitude points with the same row number.
-
-| Latitude | Longitude | Row |
-| -------- | --------- | --- |
-| 53.555   | -0.555    | 1   |
-| 53.566   | -0.566    | 1   |
-| 53.577   | -0.577    | 2   |
-| 53.588   | -0.588    | 2   |
-
-Once the CSV file has been uploaded the rows are shown on the map.
-
-Other features such as blocks and infrastructure can be added to the map as described above.
-
-To save enter a unique vineyard ID and click save to store in AGRIDS.
-
-![341364045-8731e3cc-8829-4f52-848f-31cadfee8b0f](https://github.com/LCAS/AGRIDS/assets/6209386/b0f02681-adb2-4f70-acaa-6a90fa9909c5)
-
-#### 3. Import vine rows with unlabelled end posts as a CSV file.
-To import a CSV file without the row end posts having labels, the file collums must be in the format; Latitude, Longitude.
-
-| Latitude | Longitude |
-| -------- | --------- |
-| 53.555   | -0.555    |
-| 53.566   | -0.566    |
-| 53.577   | -0.577    |
-| 53.588   | -0.588    |
-
-Once the CSV file has been uploaded the end posts are shown on the map as yellow points.
-
-If the orientation of all the rows is the same simply, click on edit properties then click on two points that represent a row's end posts.
-
-If the  orientation of all the rows is not the same draw polygons around blocks of vine rows. When this is complete click on edit properties then click on two points that represent a row's end posts in each polygon.
-
-Click on generate lines, the rows will be created connecting the rows' end posts.
-
-If the points turn red the post has not been connected to another post, click on edit geometries and move the lines to connected misaligned rows.
-
-Other features such as blocks and infrastructure can be added to the map as described above.
-
-To save enter a unique vineyard ID and click save to store in AGRIDS.
-
-![341366844-63dc7bdf-7751-49d5-acc9-b6929b7d0d71](https://github.com/LCAS/AGRIDS/assets/6209386/8b8b45f3-9a3e-4614-8117-703f8f896a0d)
-
-### Visualise Data
-Data stored in AGRIDS can be visualised on the map, and data layers can be shown and hidden by clicking the checkboxes.
-
-Properties of the features can be shown by clicking on the feature in the map.
-
-Data computed for the whole vineyard and for each block are tabulated below the map.
-
-![341367375-d3f5942e-069f-4320-94e6-86dd0e92466c](https://github.com/LCAS/AGRIDS/assets/6209386/4eb1d1ea-9b3d-4008-8e1e-259559fef0c2)
-
-### Export Data
-Data stored in AGRIDS can be exported in different formats.
-
-A GeoJSON file is created depending on the data layers selected by the checkboxes, the selected features and their properties are then explored.
-
-The computed vineyard and block data can be exported as a PDF report.
-
-Navigation and topological maps can be exported as specific robotic formats and as a KML file.
-
-![341367845-2a74c98a-12cd-4524-9dfb-fa823dab1f03](https://github.com/LCAS/AGRIDS/assets/6209386/98bf7427-6ff8-47c2-9c53-e9df9a96242d)
-
-## Fiware Orion Entities
-| Vineyard               | Block                       | Vine Row                    | Vine                     | Polygon                 | Line                      | Point                    | Photo                   |
-|------------------------|-----------------------------|-----------------------------|--------------------------|-------------------------|---------------------------|--------------------------|-------------------------|
-| vineyard_id: String    | block_id: String            | vine_row_id: String         | vine_id: String          | polygon_id: String      | line_id: String           | point_id: String         | photo_id: String        |
-| name: String           | user_defined_id: String     | user_defined_id: String     | user_defined_id: String  | user_defined_id: String | user_defined_id: String   | user_defined_id: String  | user_defined_id: String |
-| owner: String          | vineyard_id: String         | vineyard_id: String         | vineyard_id: String      | vineyard_id: String     | vineyard_id: String       | vineyard_id: String      | vineyard_id: String     |
-| street_address: String | name: string                | block_id: String            | vine_row_id: String      | name: String            | name: String              | name: String             | vine_id: String         |
-| geom: geo:json Polygon | date_start: DateTime        | under_vine_width: Float     | grapes_number: Float     | category: String        | category: String          | category: String         | timestamp: DateTime     |
-|                        | date_end: DateTime          | vine_spacing: Float         | grapes_yield: Float      | class: String           | class: String             | class: String            | storage_url: String     |
-|                        | row_spacing_m: Float        | anchor_post_distance: Float | rootstock: String        | geom: geo:json Polygon  | geom: geo:json LineString | location: geo:json Point |                         |
-|                        | under_vine_width: Float     | post_spacing: Float         | variety: String          |                         |                           |                          |                         |
-|                        | anchor_post_distance: Float | pruning_style: String       | clone: String            |                         |                           |                          |                         |
-|                        | vine_spacing: Float         | clone: String               | location: geo:json Point |                         |                           |                          |                         |
-|                        | clone: String               | variety: String             |                          |                         |                           |                          |                         |
-|                        | variety: String             | rootstock: String           |                          |                         |                           |                          |                         |
-|                        | rootstock: String           | trellis_type: String        |                          |                         |                           |                          |                         |
-|                        | trellis_type: String        | geom: geo:json LineString   |                          |                         |                           |                          |                         |
-|                        | geom: geo:json Polygon      |                             |                          |                         |                           |                          |                         |
-
-Polygon, line and point are for other farm infrastructure such as buildings, drainage ditches and storage takes.
-
-## AGRIDS Fiware API
-[AGRIDS Fiware API](https://github.com/LCAS/AGRIDS/blob/main/VISTA_API.md)
+- Keep this README focused on repository orientation.
+- Add detailed deployment, workflow, and troubleshooting guidance to the [wiki](https://github.com/LCAS/AGRIDS/wiki).
+- Check scripts for hard-coded endpoints or credentials before using them in a deployment.
